@@ -1,0 +1,6 @@
+{
+  "name": "GotaViva",
+  "description": "Aplicativo mobile-first gamificado de hidratação diária com mascotes em SVG preenchidos por camadas de bebidas, desafios, coleção desbloqueável e histórico.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

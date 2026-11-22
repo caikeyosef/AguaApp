@@ -1,0 +1,344 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-display: 'Outfit', system-ui, -apple-system, sans-serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    --apothecary-gold: #d4af37;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-mono-num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Safe area helpers for mobile PWA */
+.pt-safe {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+
+.pb-safe {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+/* Tactile spring button feedback */
+.btn-spring {
+  transition: transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    opacity 150ms ease,
+    box-shadow 180ms ease;
+}
+
+.btn-spring:active {
+  transform: scale(0.94);
+}
+
+/* Liquid wave animations */
+@keyframes waveSlideFront {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-240px);
+  }
+}
+
+@keyframes waveSlideBack {
+  0% {
+    transform: translateX(-240px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes bubbleRise {
+  0% {
+    transform: translateY(0) scale(0.55);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.9;
+  }
+  85% {
+    opacity: 0.72;
+  }
+  100% {
+    transform: translateY(-96px) scale(1.15);
+    opacity: 0;
+  }
+}
+
+@keyframes ambientBubbleLoop {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.85;
+  }
+  85% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateY(-78px) scale(1.05);
+    opacity: 0;
+  }
+}
+
+@keyframes mascotFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes mascotSquish {
+  0% {
+    transform: scale(1, 1);
+  }
+  24% {
+    transform: scale(1.09, 0.91);
+  }
+  52% {
+    transform: scale(0.95, 1.06);
+  }
+  78% {
+    transform: scale(1.02, 0.98);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
+}
+
+@keyframes iceBob {
+  0%, 100% {
+    transform: translateY(0px) rotate(-6deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(5deg);
+  }
+}
+
+@keyframes starTwinkle {
+  0%, 100% {
+    opacity: 0.25;
+    transform: scale(0.7);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+}
+
+@keyframes mistRise {
+  0% {
+    transform: translateY(4px) scale(0.9);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-28px) scale(1.25);
+    opacity: 0;
+  }
+}
+
+@keyframes chestShake {
+  0%, 100% {
+    transform: translateX(0) rotate(0deg) scale(1);
+  }
+  15% {
+    transform: translateX(-6px) rotate(-6deg) scale(1.05);
+  }
+  30% {
+    transform: translateX(6px) rotate(6deg) scale(1.07);
+  }
+  45% {
+    transform: translateX(-5px) rotate(-5deg) scale(1.09);
+  }
+  60% {
+    transform: translateX(5px) rotate(5deg) scale(1.11);
+  }
+  75% {
+    transform: translateX(-3px) rotate(-3deg) scale(1.13);
+  }
+  90% {
+    transform: translateX(3px) rotate(3deg) scale(1.06);
+  }
+}
+
+@keyframes speechPop {
+  0% {
+    opacity: 0;
+    transform: translateY(5px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes overflowPulse {
+  0%, 100% {
+    opacity: 0.72;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes toastDrop {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-wave-front {
+  animation: waveSlideFront 4.2s linear infinite;
+}
+
+.animate-wave-back {
+  animation: waveSlideBack 6.4s linear infinite;
+}
+
+.animate-bubble-rise {
+  animation: bubbleRise 1.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-ambient-bubble {
+  animation: ambientBubbleLoop 3.4s ease-in-out infinite;
+}
+
+.animate-mascot-float {
+  animation: mascotFloat 3.8s ease-in-out infinite;
+}
+
+.animate-mascot-squish {
+  animation: mascotSquish 460ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.animate-ice-bob {
+  animation: iceBob 3.2s ease-in-out infinite;
+}
+
+.animate-star-twinkle {
+  animation: starTwinkle 2.4s ease-in-out infinite;
+}
+
+.animate-mist-rise {
+  animation: mistRise 3.2s ease-out infinite;
+}
+
+.animate-chest-shake {
+  animation: chestShake 780ms cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite;
+}
+
+.animate-speech-pop {
+  animation: speechPop 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-overflow-pulse {
+  animation: overflowPulse 2.1s ease-in-out infinite;
+}
+
+.animate-toast-drop {
+  animation: toastDrop 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Clean custom range slider */
+input[type='range'].gota-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 9999px;
+  outline: none;
+}
+
+input[type='range'].gota-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  background: #d4af37;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.45);
+  cursor: pointer;
+  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+input[type='range'].gota-slider::-webkit-slider-thumb:active {
+  transform: scale(1.15);
+}
+
+input[type='range'].gota-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  background: #d4af37;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.45);
+  cursor: pointer;
+}
+
+/* Subtle custom scrollbars inside smartphone viewport */
+.phone-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.phone-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.phone-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.22);
+  border-radius: 9999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-wave-front,
+  .animate-wave-back,
+  .animate-bubble-rise,
+  .animate-ambient-bubble,
+  .animate-mascot-float,
+  .animate-mascot-squish,
+  .animate-ice-bob,
+  .animate-star-twinkle,
+  .animate-mist-rise,
+  .animate-chest-shake,
+  .animate-speech-pop,
+  .animate-overflow-pulse,
+  .animate-toast-drop {
+    animation: none !important;
+  }
+  .btn-spring {
+    transition: none !important;
+  }
+}
