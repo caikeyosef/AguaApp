@@ -61,7 +61,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ state }) => {
   };
 
   return (
-    <div className="flex flex-col pb-28">
+    <div className="pb-nav-safe flex flex-col">
       <header className="mb-4">
         <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
           Histórico

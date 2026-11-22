@@ -144,6 +144,28 @@ export interface MascotMetallicPath {
   opacity?: number;
 }
 
+export type CharacterPartAnimation =
+  | 'wing-left'
+  | 'wing-right'
+  | 'tail-wag'
+  | 'flame-dance'
+  | 'tongue-wiggle'
+  | 'ear-twitch'
+  | 'halo-float';
+
+export interface MascotAnimatedPart {
+  d: string;
+  animation: CharacterPartAnimation;
+  pivotX: number;
+  pivotY: number;
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  opacity?: number;
+  metal?: 'gold' | 'bronze' | 'cork' | 'crystal';
+  layer?: 'back' | 'front';
+}
+
 export interface MascotDefinition {
   id: MascotId;
   name: string;
@@ -158,11 +180,13 @@ export interface MascotDefinition {
   fillBottomY: number;
   /** Optional calibration for the thick double-walled inner crystal chamber */
   innerCenter?: { x: number; y: number; scaleX?: number; scaleY?: number };
-  /** 3D relief shading & crease paths (hat folds, beard layers, ear hollows, horn facets) */
+  /** 3D relief shading & anatomical contour paths */
   sculptPaths?: MascotSculptPath[];
-  /** Aged gold, bronze, cork, or cut-crystal alchemical details integrated onto the flask */
+  /** Aged gold, bronze, or crystal accessories worn by the character */
   metallicPaths?: MascotMetallicPath[];
-  /** Glossy white specular reflection paths tailored to this creature's curves */
+  /** Animated secondary character appendages (wings, tail, flame, tongue, ears, halo) */
+  animatedParts?: MascotAnimatedPart[];
+  /** Glossy white specular reflection paths tailored to this character's glass sculpture */
   specularPaths: Array<{
     d: string;
     opacity?: number;
@@ -173,14 +197,12 @@ export interface MascotDefinition {
   pinpointHighlight?: { cx: number; cy: number; rx?: number; ry?: number };
   /** Fine crisp studio rim-light reflection along right side */
   rightRimPath?: string;
-  /** X position on the right inner wall for etched 25/50/75/100% lab ticks */
-  measureX?: number;
-  /** Expressive comic face & feature paths rendered ABOVE the glass */
+  /** Expressive comic face & anatomical feature paths rendered ABOVE the glass */
   detailPaths: MascotDetailPath[];
   eyes: MascotEye[];
-  /** Extra magical crest rendered outside/above silhouette (e.g. Headless Mule sparks) */
+  /** Extra magical crest rendered outside/above silhouette (e.g. Headless Mule flames) */
   topSparks?: boolean;
-  /** True for floating ghost / genie silhouettes with softer smaller floor shadow */
+  /** True for levitating spirits (ghost / genie) instead of foot-grounded breathing */
   floating?: boolean;
 }
 

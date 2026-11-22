@@ -28,13 +28,44 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Safe area helpers for mobile PWA */
+/* Safe area helpers for iPhone Notch / Dynamic Island & Home Indicator */
+html,
+body {
+  overscroll-behavior-y: none;
+  background-color: #f5f6f8;
+}
+
+html.dark,
+html.dark body {
+  background-color: #07090f;
+}
+
 .pt-safe {
-  padding-top: max(0.75rem, env(safe-area-inset-top));
+  padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
 }
 
 .pb-safe {
-  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.4rem);
+}
+
+.px-safe {
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+}
+
+.pb-nav-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6.5rem);
+}
+
+.sheet-safe-bottom {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1.5rem);
+}
+
+.modal-safe-padding {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 1rem);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
 }
 
 /* Tactile spring button feedback */
@@ -51,25 +82,7 @@
   transform: scale(0.94);
 }
 
-/* Liquid wave animations */
-@keyframes waveSlideFront {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-240px);
-  }
-}
-
-@keyframes waveSlideBack {
-  0% {
-    transform: translateX(-240px);
-  }
-  100% {
-    transform: translateX(0);
-  }
-}
-
+/* Liquid & Ambient Animations */
 @keyframes bubbleRise {
   0% {
     transform: translateY(0) scale(0.55);
@@ -104,39 +117,121 @@
   }
 }
 
+/* Character Idle Animations */
 @keyframes mascotFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-7px) rotate(0.8deg);
+  }
+}
+
+@keyframes charBreathe {
+  0%, 100% {
+    transform: scale(1, 1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.016, 0.988) rotate(-0.6deg);
+  }
+}
+
+@keyframes charHop {
+  0% {
+    transform: translateY(0) scale(1, 1);
+  }
+  20% {
+    transform: translateY(2px) scale(1.08, 0.91);
+  }
+  48% {
+    transform: translateY(-10px) scale(0.95, 1.07);
+  }
+  74% {
+    transform: translateY(1px) scale(1.03, 0.97);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+}
+
+@keyframes eyeBlink {
+  0%, 44%, 49%, 94%, 100% {
+    transform: scaleY(1);
+  }
+  46.5%, 96.5% {
+    transform: scaleY(0.08);
+  }
+}
+
+@keyframes wingFlutterLeft {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-7deg);
+  }
+}
+
+@keyframes wingFlutterRight {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(7deg);
+  }
+}
+
+@keyframes tailWag {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  35% {
+    transform: rotate(7deg);
+  }
+  70% {
+    transform: rotate(-5deg);
+  }
+}
+
+@keyframes flameDance {
+  0%, 100% {
+    transform: scale(1, 1) skewX(0deg);
+  }
+  33% {
+    transform: scale(0.96, 1.09) skewX(4deg);
+  }
+  66% {
+    transform: scale(1.05, 0.95) skewX(-4deg);
+  }
+}
+
+@keyframes tongueWiggle {
+  0%, 100% {
+    transform: rotate(0deg) scaleY(1);
+  }
+  50% {
+    transform: rotate(-6deg) scaleY(1.06);
+  }
+}
+
+@keyframes earTwitch {
+  0%, 82%, 100% {
+    transform: rotate(0deg);
+  }
+  87% {
+    transform: rotate(-6deg);
+  }
+  92% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes haloFloat {
   0%, 100% {
     transform: translateY(0px);
   }
   50% {
-    transform: translateY(-6px);
-  }
-}
-
-@keyframes mascotSquish {
-  0% {
-    transform: scale(1, 1);
-  }
-  24% {
-    transform: scale(1.09, 0.91);
-  }
-  52% {
-    transform: scale(0.95, 1.06);
-  }
-  78% {
-    transform: scale(1.02, 0.98);
-  }
-  100% {
-    transform: scale(1, 1);
-  }
-}
-
-@keyframes iceBob {
-  0%, 100% {
-    transform: translateY(0px) rotate(-6deg);
-  }
-  50% {
-    transform: translateY(-4px) rotate(5deg);
+    transform: translateY(-4px);
   }
 }
 
@@ -222,14 +317,6 @@
   }
 }
 
-.animate-wave-front {
-  animation: waveSlideFront 4.2s linear infinite;
-}
-
-.animate-wave-back {
-  animation: waveSlideBack 6.4s linear infinite;
-}
-
 .animate-bubble-rise {
   animation: bubbleRise 1.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -239,15 +326,49 @@
 }
 
 .animate-mascot-float {
-  animation: mascotFloat 3.8s ease-in-out infinite;
+  animation: mascotFloat 3.6s ease-in-out infinite;
 }
 
-.animate-mascot-squish {
-  animation: mascotSquish 460ms cubic-bezier(0.34, 1.56, 0.64, 1);
+.animate-char-breathe {
+  animation: charBreathe 3.2s ease-in-out infinite;
+  transform-origin: 50% 90%;
 }
 
-.animate-ice-bob {
-  animation: iceBob 3.2s ease-in-out infinite;
+.animate-char-hop {
+  animation: charHop 520ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: 50% 90%;
+}
+
+.animate-eye-blink {
+  animation: eyeBlink 4.6s ease-in-out infinite;
+}
+
+.animate-wing-left {
+  animation: wingFlutterLeft 2.4s ease-in-out infinite;
+}
+
+.animate-wing-right {
+  animation: wingFlutterRight 2.4s ease-in-out infinite;
+}
+
+.animate-tail-wag {
+  animation: tailWag 2.8s ease-in-out infinite;
+}
+
+.animate-flame-dance {
+  animation: flameDance 1.7s ease-in-out infinite;
+}
+
+.animate-tongue-wiggle {
+  animation: tongueWiggle 2.2s ease-in-out infinite;
+}
+
+.animate-ear-twitch {
+  animation: earTwitch 3.8s ease-in-out infinite;
+}
+
+.animate-halo-float {
+  animation: haloFloat 2.6s ease-in-out infinite;
 }
 
 .animate-star-twinkle {
@@ -323,13 +444,19 @@ input[type='range'].gota-slider::-moz-range-thumb {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-wave-front,
-  .animate-wave-back,
   .animate-bubble-rise,
   .animate-ambient-bubble,
   .animate-mascot-float,
-  .animate-mascot-squish,
-  .animate-ice-bob,
+  .animate-char-breathe,
+  .animate-char-hop,
+  .animate-eye-blink,
+  .animate-wing-left,
+  .animate-wing-right,
+  .animate-tail-wag,
+  .animate-flame-dance,
+  .animate-tongue-wiggle,
+  .animate-ear-twitch,
+  .animate-halo-float,
   .animate-star-twinkle,
   .animate-mist-rise,
   .animate-chest-shake,

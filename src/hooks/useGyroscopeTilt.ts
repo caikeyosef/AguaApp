@@ -36,7 +36,7 @@ export function useGyroscopeTilt(onFeedback?: (message: string) => void) {
     }
 
     if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)) {
-      onFeedback?.('Sensor de movimento indisponível — arraste o frasco para balançar!');
+      onFeedback?.('Sensor de movimento indisponível — arraste o personagem para balançar!');
       return;
     }
 
@@ -45,12 +45,12 @@ export function useGyroscopeTilt(onFeedback?: (message: string) => void) {
       if (typeof ctor.requestPermission === 'function') {
         const result = await ctor.requestPermission();
         if (result !== 'granted') {
-          onFeedback?.('Permissão do sensor negada — arraste o frasco com o dedo!');
+          onFeedback?.('Permissão do sensor negada — arraste o personagem com o dedo!');
           return;
         }
       }
       setEnabled(true);
-      onFeedback?.('Giroscópio ativado! Incline o celular para balançar a poção.');
+      onFeedback?.('Giroscópio ativado! Incline o celular para balançar o líquido.');
     } catch {
       onFeedback?.('Não foi possível ativar o sensor neste navegador.');
     }

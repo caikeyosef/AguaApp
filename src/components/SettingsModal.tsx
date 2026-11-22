@@ -45,7 +45,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/75 backdrop-blur-xs sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/75 pt-[calc(env(safe-area-inset-top,0px)+1rem)] backdrop-blur-xs sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="settings-modal-title"
@@ -53,7 +53,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="max-h-[88vh] w-full max-w-[430px] overflow-y-auto rounded-t-3xl border border-slate-200 bg-white px-5 pt-4 pb-6 shadow-2xl dark:border-slate-800 dark:bg-[#101522] sm:rounded-3xl">
+      <div className="sheet-safe-bottom max-h-[88dvh] w-full max-w-[430px] overflow-y-auto rounded-t-3xl border border-slate-200 bg-white px-5 pt-4 shadow-2xl dark:border-slate-800 dark:bg-[#101522] sm:rounded-3xl sm:pb-6">
         <div className="flex items-center justify-between">
           <div>
             <h2

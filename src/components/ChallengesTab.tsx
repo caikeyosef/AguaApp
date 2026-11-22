@@ -15,7 +15,7 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
   const activeCount = statuses.filter((s) => s.isActive && !s.isCompleted).length;
 
   return (
-    <div className="flex flex-col pb-28">
+    <div className="pb-nav-safe flex flex-col">
       <header className="mb-4">
         <div className="flex items-center gap-2">
           <ScrollText className="h-5 w-5 text-[#D4AF37]" />

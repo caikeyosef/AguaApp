@@ -119,7 +119,7 @@ export const CollectionTab: React.FC<CollectionTabProps> = ({
     rarityFilter === 'todas' ? RARITY_ORDER : RARITY_ORDER.filter((r) => r === rarityFilter);
 
   return (
-    <div className="flex flex-col pb-28">
+    <div className="pb-nav-safe flex flex-col">
       <header className="mb-3.5">
         <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
           Coleção & Boticário
@@ -570,12 +570,12 @@ export const CollectionTab: React.FC<CollectionTabProps> = ({
       {/* Gacha Reward Reveal Modal */}
       {revealedReward && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm"
+          className="modal-safe-padding fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-labelledby="chest-reward-title"
         >
-          <div className="relative w-full max-w-[350px] rounded-3xl border border-[#D4AF37]/70 bg-white p-6 text-center shadow-2xl dark:bg-[#101522]">
+          <div className="relative max-h-[88dvh] w-full max-w-[350px] overflow-y-auto rounded-3xl border border-[#D4AF37]/70 bg-white p-6 text-center shadow-2xl dark:bg-[#101522]">
             <button
               type="button"
               onClick={() => setRevealedReward(null)}

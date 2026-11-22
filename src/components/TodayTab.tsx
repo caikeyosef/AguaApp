@@ -100,7 +100,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
   const sipTiming = formatTimeSinceLastSip(lastEntry?.timestamp ?? null);
 
   return (
-    <div className="flex flex-col pb-28">
+    <div className="pb-nav-safe flex flex-col">
       {/* Level & XP Progress Strip */}
       <section
         aria-label="Progresso de nível e experiência"
@@ -296,13 +296,13 @@ export const TodayTab: React.FC<TodayTabProps> = ({
               className="mt-1 inline-flex items-center justify-center gap-1 text-xs font-semibold text-amber-700 dark:text-[#F3D77A]"
             >
               <Sparkles className="h-3.5 w-3.5 shrink-0" />
-              <span>Poção Transbordando! Frasco na capacidade máxima.</span>
+              <span>Hidratação Máxima! {mascot.name} transbordando energia.</span>
             </p>
           ) : (
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               {goalMet
-                ? 'Poção diária completa! Boticário aprovado.'
-                : `Faltam ${formatMl(remainingMl)} para encher o frasco`}
+                ? 'Meta diária completa! Personagem 100% hidratado.'
+                : `Faltam ${formatMl(remainingMl)} para completar sua meta`}
             </p>
           )}
         </div>
@@ -373,10 +373,10 @@ export const TodayTab: React.FC<TodayTabProps> = ({
         {today.entries.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-6 text-center dark:border-slate-800">
             <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-              Frasco vazio por enquanto
+              Nenhum registro por enquanto
             </p>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Toque em &quot;+250 ml Água&quot; ou registre outra bebida para encher sua criatura.
+              Toque em &quot;+250 ml Água&quot; ou registre outra bebida para preencher seu personagem.
             </p>
           </div>
         ) : (

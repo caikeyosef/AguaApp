@@ -73,7 +73,7 @@ export const QuickLogSheet: React.FC<QuickLogSheetProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/70 backdrop-blur-xs sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/70 pt-[calc(env(safe-area-inset-top,0px)+1rem)] backdrop-blur-xs sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="quick-log-title"
@@ -81,7 +81,7 @@ export const QuickLogSheet: React.FC<QuickLogSheetProps> = ({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-[430px] rounded-t-3xl border border-slate-200 bg-white px-5 pt-3 pb-6 shadow-2xl dark:border-slate-800 dark:bg-[#101522] sm:rounded-3xl">
+      <div className="sheet-safe-bottom max-h-[90dvh] w-full max-w-[430px] overflow-y-auto rounded-t-3xl border border-slate-200 bg-white px-5 pt-3 shadow-2xl dark:border-slate-800 dark:bg-[#101522] sm:rounded-3xl sm:pb-6">
         <div
           className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-300 dark:bg-slate-700"
           aria-hidden="true"

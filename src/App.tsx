@@ -558,14 +558,14 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full bg-[#E8ECF2] text-slate-900 transition-colors duration-200 dark:bg-[#04060B] dark:text-slate-100 sm:flex sm:items-center sm:justify-center sm:px-4 sm:py-5">
+    <div className="fixed inset-0 w-full bg-[#E8ECF2] text-slate-900 transition-colors duration-200 dark:bg-[#04060B] dark:text-slate-100 sm:static sm:flex sm:min-h-[100dvh] sm:items-center sm:justify-center sm:px-4 sm:py-5">
       {/* Smartphone container on desktop / full edge-to-edge on mobile */}
-      <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F5F6F8] dark:bg-[#07090F] sm:h-[min(860px,calc(100vh-2.5rem))] sm:max-w-[430px] sm:rounded-[38px] sm:border sm:border-slate-300/80 sm:shadow-[0_28px_80px_-20px_rgba(2,6,23,0.45)] dark:sm:border-[#D4AF37]/20 dark:sm:shadow-[0_32px_90px_-16px_rgba(0,0,0,0.92)]">
+      <div className="relative flex h-full w-full flex-col overflow-hidden bg-[#F5F6F8] dark:bg-[#07090F] sm:h-[min(860px,calc(100vh-2.5rem))] sm:max-w-[430px] sm:rounded-[38px] sm:border sm:border-slate-300/80 sm:shadow-[0_28px_80px_-20px_rgba(2,6,23,0.45)] dark:sm:border-[#D4AF37]/20 dark:sm:shadow-[0_32px_90px_-16px_rgba(0,0,0,0.92)]">
         {/* Confetti overlay layer */}
         <ConfettiCanvas active={confettiActive} />
 
-        {/* Compact Top App Bar (Obsidian & Gold Apothecary Header) */}
-        <header className="pt-safe relative z-30 flex shrink-0 items-center justify-between gap-2 border-b border-slate-200/85 bg-[#F5F6F8]/95 px-4 pb-2.5 backdrop-blur-md dark:border-slate-800/80 dark:bg-[#07090F]/95">
+        {/* Compact Top App Bar (iPhone Notch & Dynamic Island Safe) */}
+        <header className="pt-safe px-safe relative z-30 flex shrink-0 items-center justify-between gap-2 border-b border-slate-200/85 bg-[#F5F6F8]/95 pb-2.5 backdrop-blur-md dark:border-slate-800/80 dark:bg-[#07090F]/95">
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#D4AF37]/40 bg-gradient-to-br from-sky-500 to-cyan-600 text-white shadow-xs">
               <Droplets className="h-4.5 w-4.5" />
@@ -636,91 +636,93 @@ export default function App() {
           </div>
         </header>
 
-        {/* Transient feedback toast positioned cleanly below top header */}
-        {toastMessage && (
-          <div
-            role="status"
-            aria-live="polite"
-            data-testid="app-toast"
-            className="animate-toast-drop pointer-events-none absolute top-[calc(max(0.75rem,env(safe-area-inset-top))+54px)] right-4 left-4 z-40 flex justify-center"
-          >
-            <div className="max-w-full rounded-xl border border-[#D4AF37]/50 bg-white/96 px-3.5 py-2 text-center text-xs font-semibold text-slate-900 shadow-lg backdrop-blur-md dark:bg-[#131A2C]/96 dark:text-white">
-              {toastMessage}
+        {/* Content Region: anchors toast cleanly below header regardless of notch height */}
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+          {toastMessage && (
+            <div
+              role="status"
+              aria-live="polite"
+              data-testid="app-toast"
+              className="animate-toast-drop pointer-events-none absolute top-3 right-4 left-4 z-40 flex justify-center"
+            >
+              <div className="max-w-full rounded-xl border border-[#D4AF37]/50 bg-white/96 px-3.5 py-2 text-center text-xs font-semibold text-slate-900 shadow-lg backdrop-blur-md dark:bg-[#131A2C]/96 dark:text-white">
+                {toastMessage}
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* Scrollable Main Content Viewport */}
-        <main className="phone-scroll flex-1 overflow-y-auto px-4 pt-4">
-          {activeTab === 'hoje' && (
-            <TodayTab
-              today={today}
-              activeMascotId={state.activeMascotId}
-              activeGlassMaterialId={state.activeGlassMaterialId}
-              activeLiquidEffectId={state.activeLiquidEffectId}
-              layers={liquidSummary.layers}
-              totalHydratedMl={liquidSummary.totalHydratedMl}
-              rawPercent={liquidSummary.rawPercent}
-              clampedPercent={liquidSummary.clampedPercent}
-              currentStreak={streakInfo.currentStreak}
-              streakShields={state.streakShields}
-              levelInfo={levelInfo}
-              rhythmCombo={rhythmCombo}
-              speechText={speechState.text}
-              speechKey={speechState.key}
-              bubbleBurstKey={bubbleBurstKey}
-              squishKey={squishKey}
-              gyroEnabled={gyroEnabled}
-              gyroTiltPx={gyroTiltPx}
-              onToggleGyroscope={toggleGyroscope}
-              onTapMascot={handleTapMascot}
-              onQuickAddWater={() => handleLogBeverage('agua', 250)}
-              onOpenQuickLog={() => {
-                playTapSound(state.settings.soundEnabled);
-                setQuickLogOpen(true);
-              }}
-              onToggleWorkoutBonus={handleToggleWorkoutBonus}
-              onDeleteEntry={handleDeleteEntry}
-            />
           )}
 
-          {activeTab === 'missoes' && (
-            <ChallengesTab
-              statuses={challengeStatuses}
-              onToggleChallenge={handleToggleChallenge}
-            />
-          )}
+          {/* Scrollable Main Content Viewport */}
+          <main className="phone-scroll px-safe flex-1 overflow-y-auto pt-3.5">
+            {activeTab === 'hoje' && (
+              <TodayTab
+                today={today}
+                activeMascotId={state.activeMascotId}
+                activeGlassMaterialId={state.activeGlassMaterialId}
+                activeLiquidEffectId={state.activeLiquidEffectId}
+                layers={liquidSummary.layers}
+                totalHydratedMl={liquidSummary.totalHydratedMl}
+                rawPercent={liquidSummary.rawPercent}
+                clampedPercent={liquidSummary.clampedPercent}
+                currentStreak={streakInfo.currentStreak}
+                streakShields={state.streakShields}
+                levelInfo={levelInfo}
+                rhythmCombo={rhythmCombo}
+                speechText={speechState.text}
+                speechKey={speechState.key}
+                bubbleBurstKey={bubbleBurstKey}
+                squishKey={squishKey}
+                gyroEnabled={gyroEnabled}
+                gyroTiltPx={gyroTiltPx}
+                onToggleGyroscope={toggleGyroscope}
+                onTapMascot={handleTapMascot}
+                onQuickAddWater={() => handleLogBeverage('agua', 250)}
+                onOpenQuickLog={() => {
+                  playTapSound(state.settings.soundEnabled);
+                  setQuickLogOpen(true);
+                }}
+                onToggleWorkoutBonus={handleToggleWorkoutBonus}
+                onDeleteEntry={handleDeleteEntry}
+              />
+            )}
 
-          {activeTab === 'colecao' && (
-            <CollectionTab
-              activeMascotId={state.activeMascotId}
-              unlockedMascotIds={state.unlockedMascotIds}
-              activeGlassMaterialId={state.activeGlassMaterialId}
-              unlockedGlassMaterialIds={state.unlockedGlassMaterialIds}
-              activeLiquidEffectId={state.activeLiquidEffectId}
-              unlockedLiquidEffectIds={state.unlockedLiquidEffectIds}
-              goldCoins={state.goldCoins}
-              streakShields={state.streakShields}
-              remainingGachaCount={remainingGachaCount}
-              todayLayers={liquidSummary.layers}
-              todayClampedPercent={liquidSummary.clampedPercent}
-              onSelectMascot={handleSelectMascot}
-              onSelectGlassMaterial={handleSelectGlassMaterial}
-              onSelectLiquidEffect={handleSelectLiquidEffect}
-              onOpenChest={handleOpenChest}
-              onBuyStreakShield={handleBuyStreakShield}
-            />
-          )}
+            {activeTab === 'missoes' && (
+              <ChallengesTab
+                statuses={challengeStatuses}
+                onToggleChallenge={handleToggleChallenge}
+              />
+            )}
 
-          {activeTab === 'historico' && <HistoryTab state={state} />}
-        </main>
+            {activeTab === 'colecao' && (
+              <CollectionTab
+                activeMascotId={state.activeMascotId}
+                unlockedMascotIds={state.unlockedMascotIds}
+                activeGlassMaterialId={state.activeGlassMaterialId}
+                unlockedGlassMaterialIds={state.unlockedGlassMaterialIds}
+                activeLiquidEffectId={state.activeLiquidEffectId}
+                unlockedLiquidEffectIds={state.unlockedLiquidEffectIds}
+                goldCoins={state.goldCoins}
+                streakShields={state.streakShields}
+                remainingGachaCount={remainingGachaCount}
+                todayLayers={liquidSummary.layers}
+                todayClampedPercent={liquidSummary.clampedPercent}
+                onSelectMascot={handleSelectMascot}
+                onSelectGlassMaterial={handleSelectGlassMaterial}
+                onSelectLiquidEffect={handleSelectLiquidEffect}
+                onOpenChest={handleOpenChest}
+                onBuyStreakShield={handleBuyStreakShield}
+              />
+            )}
 
-        {/* Fixed 4-Tab Bottom Navigation Bar */}
+            {activeTab === 'historico' && <HistoryTab state={state} />}
+          </main>
+        </div>
+
+        {/* Fixed 4-Tab Bottom Navigation Bar (iPhone Home Indicator Safe) */}
         <nav
           aria-label="Navegação principal"
-          className="pb-safe absolute right-0 bottom-0 left-0 z-30 border-t border-slate-200/85 bg-white/94 backdrop-blur-md dark:border-slate-800/90 dark:bg-[#0A0E18]/94"
+          className="pb-safe px-safe absolute right-0 bottom-0 left-0 z-30 border-t border-slate-200/85 bg-white/94 backdrop-blur-md dark:border-slate-800/90 dark:bg-[#0A0E18]/94"
         >
-          <div className="grid h-16 grid-cols-4 items-center px-2">
+          <div className="grid h-16 grid-cols-4 items-center">
             {NAV_TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;

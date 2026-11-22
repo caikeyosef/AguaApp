@@ -19,7 +19,7 @@ const BEVERAGE_QUIPS: Record<BeverageId, string[]> = {
     'Mais café? Suas olheiras já têm CEP próprio.',
     'O Goblin aprovou, seus rins nem tanto.',
     'Poção de produtividade registrada (80% de água, 20% caos).',
-    'Cafeína no frasco! Só não esqueça da água depois.',
+    'Cafeína circulando! Só não esqueça da água depois.',
   ],
   cha: [
     'Chá quentinho... que chique, mestre alquimista.',
@@ -27,7 +27,7 @@ const BEVERAGE_QUIPS: Record<BeverageId, string[]> = {
     '95% hidratação e 100% paz interior.',
   ],
   suco: [
-    'Elixir de frutas! Vitamina aprovada no frasco.',
+    'Elixir de frutas! Vitamina aprovada pela guilda.',
     'Cor vibrante garantida na camada de hoje.',
     'Suco fresco! Quase tão puro quanto água da fonte.',
   ],
@@ -39,7 +39,7 @@ const BEVERAGE_QUIPS: Record<BeverageId, string[]> = {
   leite: [
     'Poção cremosa! Camada branca digna de alquimia.',
     '100% hidratação com textura de taverna.',
-    'Leite no frasco — forte nos ossos e na meta.',
+    'Leite registrado — forte nos ossos e na meta.',
   ],
   refrigerante: [
     'Poção suspeita detectada... aceito 75%.',
@@ -50,7 +50,7 @@ const BEVERAGE_QUIPS: Record<BeverageId, string[]> = {
 
 const GOAL_QUIPS = [
   'Hidratação nível mago supremo. Pode descansar, mortal.',
-  '100% no frasco! A guilda dos boticários saúda você.',
+  '100% hidratado! A guilda dos boticários saúda você.',
   'Meta batida! Nem o Kraken aguenta tanta água.',
 ];
 
@@ -63,12 +63,12 @@ const DRY_QUIPS = [
 
 const WORKOUT_QUIPS = [
   'Modo treino ativo! +500 ml pra compensar o suor épico.',
-  'Calor ou batalha na academia? Mais poção no frasco!',
+  'Calor ou batalha na academia? Mais hidratação pra dentro!',
 ];
 
 const TAP_QUIPS = [
   'Ei! Cuidado que eu sou de vidro soprado!',
-  'Cutucando o frasco não enche a meta, mortal.',
+  'Cutucar meu cristal não enche a meta, mortal.',
   'Balança devagar que faz espuma!',
   'Olha o brilho desse cristal... mas prefiro cheio de água.',
   'Toque registrado. Agora manda um gole pra dentro!',
