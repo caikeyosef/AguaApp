@@ -61,10 +61,8 @@ import {
   rolloverToDate,
   syncGamificationState,
 } from './utils/hydration';
-import { useGyroscopeTilt } from './hooks/useGyroscopeTilt';
 import {
   playCelebrationChord,
-  playDropletSound,
   playTapSound,
 } from './utils/sound';
 import { createInitialState, loadAppState, saveAppState } from './utils/storage';
@@ -85,8 +83,13 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('hoje');
   const [quickLogOpen, setQuickLogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [bubbleBurstKey, setBubbleBurstKey] = useState(0);
-  const [squishKey, setSquishKey] = useState(0);
+  const [drinkTriggerKey, setDrinkTriggerKey] = useState(0);
+  const [lastDrinkColor, setLastDrinkColor] = useState<string>(() => {
+    const initial = loadAppState();
+    const todayRec = ensureDayRecord(initial, initial.currentDateKey);
+    const lastEntry = todayRec.entries[todayRec.entries.length - 1] ?? null;
+    return lastEntry ? BEVERAGE_MAP[lastEntry.beverageId].color : BEVERAGE_MAP.agua.color;
+  });
   const [confettiActive, setConfettiActive] = useState(false);
   const [celebration, setCelebration] = useState<CelebrationPayload | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -184,8 +187,6 @@ export default function App() {
     setToastMessage(message);
   };
 
-  const { gyroEnabled, gyroTiltPx, toggleGyroscope } = useGyroscopeTilt(showToast);
-
   const updateSpeech = (text: string) => {
     setSpeechState((prev) => ({ text, key: prev.key + 1 }));
   };
@@ -260,9 +261,6 @@ export default function App() {
   };
 
   const handleTapMascot = () => {
-    playDropletSound(state.settings.soundEnabled);
-    setSquishKey((k) => k + 1);
-
     const lastEntry = today.entries[today.entries.length - 1] ?? null;
     const timing = formatTimeSinceLastSip(lastEntry?.timestamp ?? null);
 
@@ -308,9 +306,9 @@ export default function App() {
       },
     };
 
-    playDropletSound(state.settings.soundEnabled);
-    setBubbleBurstKey((k) => k + 1);
     const bev = BEVERAGE_MAP[beverageId];
+    setLastDrinkColor(bev.color);
+    setDrinkTriggerKey((k) => k + 1);
     updateSpeech(pickSpeechLine({ type: 'beverage', beverageId }, speechState.key + 1));
     showToast(`+${formatMl(newEntry.hydratedMl)} (${bev.shortName}) · +${earnedCoins} Ouro`);
     applyStateWithGamification(nextDraft, { directCoins: earnedCoins });
@@ -505,7 +503,8 @@ export default function App() {
       },
     };
 
-    setBubbleBurstKey((k) => k + 1);
+    setLastDrinkColor(BEVERAGE_MAP.agua.color);
+    setDrinkTriggerKey((k) => k + 1);
     setActiveTab('hoje');
     applyStateWithGamification(nextDraft, { forceCheckCelebration: true });
   };
@@ -636,23 +635,23 @@ export default function App() {
           </div>
         </header>
 
-        {/* Content Region: anchors toast cleanly below header regardless of notch height */}
+        {/* Content Region: anchors toast cleanly right below header regardless of notch height */}
         <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
           {toastMessage && (
             <div
               role="status"
               aria-live="polite"
               data-testid="app-toast"
-              className="animate-toast-drop pointer-events-none absolute top-3 right-4 left-4 z-40 flex justify-center"
+              className="animate-toast-drop pointer-events-none absolute top-2 right-4 left-4 z-40 flex justify-center"
             >
-              <div className="max-w-full rounded-xl border border-[#D4AF37]/50 bg-white/96 px-3.5 py-2 text-center text-xs font-semibold text-slate-900 shadow-lg backdrop-blur-md dark:bg-[#131A2C]/96 dark:text-white">
+              <div className="max-w-full rounded-xl border border-[#D4AF37]/55 bg-white/96 px-3.5 py-2 text-center text-xs font-semibold text-slate-900 shadow-lg dark:bg-[#131A2C]/96 dark:text-white">
                 {toastMessage}
               </div>
             </div>
           )}
 
           {/* Scrollable Main Content Viewport */}
-          <main className="phone-scroll px-safe flex-1 overflow-y-auto pt-3.5">
+          <main className="phone-scroll px-safe flex-1 overflow-y-auto pt-5">
             {activeTab === 'hoje' && (
               <TodayTab
                 today={today}
@@ -669,11 +668,9 @@ export default function App() {
                 rhythmCombo={rhythmCombo}
                 speechText={speechState.text}
                 speechKey={speechState.key}
-                bubbleBurstKey={bubbleBurstKey}
-                squishKey={squishKey}
-                gyroEnabled={gyroEnabled}
-                gyroTiltPx={gyroTiltPx}
-                onToggleGyroscope={toggleGyroscope}
+                drinkTriggerKey={drinkTriggerKey}
+                lastDrinkColor={lastDrinkColor}
+                soundEnabled={state.settings.soundEnabled}
                 onTapMascot={handleTapMascot}
                 onQuickAddWater={() => handleLogBeverage('agua', 250)}
                 onOpenQuickLog={() => {
@@ -705,6 +702,8 @@ export default function App() {
                 remainingGachaCount={remainingGachaCount}
                 todayLayers={liquidSummary.layers}
                 todayClampedPercent={liquidSummary.clampedPercent}
+                lastDrinkColor={lastDrinkColor}
+                soundEnabled={state.settings.soundEnabled}
                 onSelectMascot={handleSelectMascot}
                 onSelectGlassMaterial={handleSelectGlassMaterial}
                 onSelectLiquidEffect={handleSelectLiquidEffect}

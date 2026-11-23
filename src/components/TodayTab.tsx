@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Clock,
-  Compass,
   Droplets,
   Flame,
   Moon,
@@ -27,7 +26,7 @@ import {
 } from '../types/hydration';
 import { OVERFLOW_THRESHOLD_PERCENT } from '../utils/fluidPhysics';
 import { formatMl, WORKOUT_BONUS_ML } from '../utils/hydration';
-import { MascotLiquidSvg } from './MascotLiquidSvg';
+import { Character3DStage } from './Character3DStage';
 import { BeverageIcon } from './QuickLogSheet';
 
 interface TodayTabProps {
@@ -45,11 +44,9 @@ interface TodayTabProps {
   rhythmCombo: RhythmComboStatus;
   speechText: string;
   speechKey: number;
-  bubbleBurstKey: number;
-  squishKey: number;
-  gyroEnabled: boolean;
-  gyroTiltPx: number;
-  onToggleGyroscope: () => void;
+  drinkTriggerKey: number;
+  lastDrinkColor: string;
+  soundEnabled: boolean;
   onTapMascot: () => void;
   onQuickAddWater: () => void;
   onOpenQuickLog: () => void;
@@ -80,11 +77,9 @@ export const TodayTab: React.FC<TodayTabProps> = ({
   rhythmCombo,
   speechText,
   speechKey,
-  bubbleBurstKey,
-  squishKey,
-  gyroEnabled,
-  gyroTiltPx,
-  onToggleGyroscope,
+  drinkTriggerKey,
+  lastDrinkColor,
+  soundEnabled,
   onTapMascot,
   onQuickAddWater,
   onOpenQuickLog,
@@ -104,7 +99,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
       {/* Level & XP Progress Strip */}
       <section
         aria-label="Progresso de nível e experiência"
-        className="border-b border-slate-200/80 pb-3 dark:border-slate-800/80"
+        className="border-b border-slate-200/80 pb-2 dark:border-slate-800/80"
       >
         <div className="flex items-center justify-between text-xs">
           <span className="truncate font-semibold text-slate-800 dark:text-slate-100">
@@ -114,7 +109,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
             {levelInfo.xpIntoLevel}/{levelInfo.xpForNextLevel} XP
           </span>
         </div>
-        <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-[#161D2F]">
+        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-[#161D2F]">
           <div
             className="h-full rounded-full bg-gradient-to-r from-[#D4AF37] to-amber-300 transition-all duration-500"
             style={{ width: `${levelInfo.progressPercent}%` }}
@@ -123,7 +118,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
       </section>
 
       {/* Streak (+ Shields) & Workout/Heat Bonus */}
-      <section className="mt-2.5 flex items-center justify-between gap-2">
+      <section className="mt-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <div
             className="flex items-center gap-1.5 text-sm"
@@ -175,7 +170,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
       {/* Daily Rhythm Combo (Manhã / Tarde / Noite -> 2x XP & Ouro) */}
       <section
         aria-label="Combo de Ritmo Diário"
-        className="mt-2.5 flex items-center justify-between gap-2 rounded-2xl border border-slate-200/90 bg-white/90 px-3 py-2 dark:border-slate-800/90 dark:bg-[#101522]"
+        className="mt-2 flex items-center justify-between gap-2 rounded-2xl border border-slate-200/90 bg-white/90 px-3 py-1.5 dark:border-slate-800/90 dark:bg-[#101522]"
       >
         <div className="flex items-center gap-3">
           {[
@@ -208,17 +203,17 @@ export const TodayTab: React.FC<TodayTabProps> = ({
         </span>
       </section>
 
-      {/* Sarcastic Speech Bubble + Hero 3D Thick-Glass Mascot Stage */}
-      <section className="mt-2.5 flex flex-col items-center">
+      {/* Sarcastic Speech Bubble + Hero 3D Solid Character Stage */}
+      <section className="mt-2 flex flex-col items-center">
         <div
           key={speechKey}
           data-testid="mascot-speech-bubble"
-          className="animate-speech-pop relative w-full max-w-[336px] rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-center shadow-xs dark:border-[#D4AF37]/45 dark:bg-[#12192A]"
+          className="animate-speech-pop relative w-full max-w-[336px] rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-center shadow-xs dark:border-[#D4AF37]/45 dark:bg-[#12192A]"
         >
-          <p className="text-xs font-medium leading-relaxed text-slate-900 dark:text-slate-50">
+          <p className="text-xs font-medium leading-snug text-slate-900 dark:text-slate-50">
             &ldquo;{speechText}&rdquo;
           </p>
-          <div className="mt-1 flex items-center justify-center gap-1 text-[11px] text-slate-500 dark:text-slate-300/80">
+          <div className="mt-0.5 flex items-center justify-center gap-1 text-[11px] text-slate-500 dark:text-slate-300/80">
             <Clock className="h-3 w-3 shrink-0" />
             <span>{sipTiming.label}</span>
             <span aria-hidden="true">·</span>
@@ -231,50 +226,35 @@ export const TodayTab: React.FC<TodayTabProps> = ({
           />
         </div>
 
-        {/* Hero Centerpiece Stage with Discreet Gyroscope / Physics Toggle */}
-        <div className="relative mt-1 flex w-full items-center justify-center">
-          <button
-            type="button"
-            onClick={onToggleGyroscope}
-            aria-pressed={gyroEnabled}
-            aria-label={
-              gyroEnabled
-                ? 'Desativar física por giroscópio'
-                : 'Ativar física por giroscópio ao inclinar o celular'
-            }
-            title={gyroEnabled ? 'Giroscópio ativo' : 'Ativar física de inclinação (Giroscópio)'}
-            data-testid="gyro-toggle-btn"
-            className={`btn-spring absolute top-2 right-1 z-10 flex h-9 w-9 items-center justify-center rounded-xl border transition-colors ${
-              gyroEnabled
-                ? 'border-[#D4AF37]/80 bg-[#D4AF37]/15 text-amber-700 shadow-xs dark:text-[#F3D77A]'
-                : 'border-slate-200/90 bg-white/80 text-slate-500 hover:border-slate-300 hover:text-slate-800 dark:border-slate-800 dark:bg-[#101522]/85 dark:text-slate-400 dark:hover:text-slate-200'
-            }`}
-          >
-            <Compass className={`h-4 w-4 ${gyroEnabled ? 'animate-spin' : ''}`} style={gyroEnabled ? { animationDuration: '9s' } : undefined} />
-          </button>
-
-          <div className="p-1">
-            <MascotLiquidSvg
-              mascot={mascot}
-              layers={layers}
-              clampedPercent={clampedPercent}
-              rawPercent={rawPercent}
-              glassMaterialId={activeGlassMaterialId}
-              liquidEffectId={activeLiquidEffectId}
-              bubbleBurstKey={bubbleBurstKey}
-              squishKey={squishKey}
-              gyroTiltPx={gyroTiltPx}
-              onInteractiveTap={onTapMascot}
-              size="hero"
-            />
-          </div>
+        {/* Hero 3D Solid Character Stage + Luminous Multi-Beverage Progress Ring */}
+        <div className="relative mt-2 flex w-full flex-col items-center justify-center">
+          <Character3DStage
+            mascotId={mascot.id}
+            rarity={mascot.rarity}
+            mascotName={mascot.name}
+            glassMaterialId={activeGlassMaterialId}
+            liquidEffectId={activeLiquidEffectId}
+            layers={layers}
+            clampedPercent={clampedPercent}
+            rawPercent={rawPercent}
+            drinkColor={lastDrinkColor}
+            drinkTriggerKey={drinkTriggerKey}
+            soundEnabled={soundEnabled}
+            showProgressRing
+            allowZoom={false}
+            size="hero"
+            onTapCharacter={onTapMascot}
+          />
+          <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+            Arraste 360° para girar · Toque para beber
+          </p>
         </div>
 
         {/* Primary Hydration Readout */}
-        <div className="mt-0.5 text-center">
+        <div className="mt-1 text-center">
           <div className="flex items-baseline justify-center gap-1">
             <span
-              className="font-display tabular-nums text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white"
+              className="font-display tabular-nums text-[44px] leading-none font-extrabold tracking-tight text-slate-900 dark:text-white"
               data-testid="hydration-percent"
             >
               {rawPercent}%
@@ -293,13 +273,13 @@ export const TodayTab: React.FC<TodayTabProps> = ({
           {isOverflowing ? (
             <p
               data-testid="overflow-status"
-              className="mt-1 inline-flex items-center justify-center gap-1 text-xs font-semibold text-amber-700 dark:text-[#F3D77A]"
+              className="mt-0.5 inline-flex items-center justify-center gap-1 text-xs font-semibold text-amber-700 dark:text-[#F3D77A]"
             >
               <Sparkles className="h-3.5 w-3.5 shrink-0" />
               <span>Hidratação Máxima! {mascot.name} transbordando energia.</span>
             </p>
           ) : (
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
               {goalMet
                 ? 'Meta diária completa! Personagem 100% hidratado.'
                 : `Faltam ${formatMl(remainingMl)} para completar sua meta`}
@@ -310,7 +290,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
         {/* Inline Legend of Layered Beverages */}
         {layers.length > 0 && (
           <div
-            className="mt-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-slate-600 dark:text-slate-400"
+            className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-slate-600 dark:text-slate-400"
             aria-label="Camadas de bebidas de hoje"
           >
             {layers.map((layer) => (
@@ -329,11 +309,11 @@ export const TodayTab: React.FC<TodayTabProps> = ({
       </section>
 
       {/* Primary Thumb-Zone Quick Actions */}
-      <section className="mt-3 grid grid-cols-[1fr_1.35fr] gap-2.5">
+      <section className="mt-2.5 grid grid-cols-[1fr_1.35fr] gap-2.5">
         <button
           type="button"
           onClick={onQuickAddWater}
-          className="btn-spring flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-sky-500/40 bg-sky-500/12 px-3 text-sm font-bold text-sky-700 hover:bg-sky-500/20 dark:text-sky-300"
+          className="btn-spring flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-sky-500/40 bg-sky-500/12 px-3 text-sm font-bold text-sky-700 hover:bg-sky-500/20 dark:text-sky-300"
         >
           <Droplets className="h-4 w-4 shrink-0" />
           <span className="whitespace-nowrap">+250 ml Água</span>
@@ -342,7 +322,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
         <button
           type="button"
           onClick={onOpenQuickLog}
-          className="btn-spring flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 text-sm font-bold text-white shadow-lg shadow-sky-500/25 hover:bg-sky-400"
+          className="btn-spring flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 text-sm font-bold text-white shadow-lg shadow-sky-500/25 hover:bg-sky-400"
         >
           <Plus className="h-5 w-5 shrink-0" />
           <span className="whitespace-nowrap">Registrar bebida</span>

@@ -113,3 +113,67 @@ export function playTapSound(enabled: boolean): void {
   osc.start(now);
   osc.stop(now + 0.045);
 }
+
+/**
+ * Playful rhythmic "glug" sound synced to each gulp beat in the 3D drinking animation.
+ */
+export function playGulpSound(enabled: boolean, beatIndex = 0): void {
+  if (!enabled) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  try {
+    const now = ctx.currentTime;
+    const baseFreq = 210 + beatIndex * 42;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(baseFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 2.45, now + 0.085);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.15, now + 0.16);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.18, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.18);
+  } catch {
+    // Ignore autoplay restrictions before user gesture
+  }
+}
+
+/**
+ * Refreshing crystalline chord ("Aaaah!") played at the happy hop finale of drinking.
+ */
+export function playAhhhSound(enabled: boolean): void {
+  if (!enabled) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  try {
+    const now = ctx.currentTime;
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      const t = now + idx * 0.045;
+      osc.frequency.setValueAtTime(freq, t);
+
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.linearRampToValueAtTime(0.075, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0008, t + 0.36);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.38);
+    });
+  } catch {
+    // Ignore autoplay restrictions before user gesture
+  }
+}

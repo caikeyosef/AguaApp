@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import {
+  Box,
   Check,
   Coins,
+  Droplets,
   FlaskConical,
   Gift,
   Lock,
@@ -26,6 +28,7 @@ import {
   MascotId,
   Rarity,
 } from '../types/hydration';
+import { Character3DStage } from './Character3DStage';
 import { MascotLiquidSvg } from './MascotLiquidSvg';
 
 type CollectionSubTab = 'criaturas' | 'bau' | 'alquimia';
@@ -42,6 +45,8 @@ interface CollectionTabProps {
   remainingGachaCount: number;
   todayLayers: LiquidLayer[];
   todayClampedPercent: number;
+  lastDrinkColor: string;
+  soundEnabled: boolean;
   onSelectMascot: (id: MascotId) => void;
   onSelectGlassMaterial: (id: GlassMaterialId) => void;
   onSelectLiquidEffect: (id: LiquidEffectId) => void;
@@ -63,6 +68,8 @@ export const CollectionTab: React.FC<CollectionTabProps> = ({
   remainingGachaCount,
   todayLayers,
   todayClampedPercent,
+  lastDrinkColor,
+  soundEnabled,
   onSelectMascot,
   onSelectGlassMaterial,
   onSelectLiquidEffect,
@@ -73,6 +80,8 @@ export const CollectionTab: React.FC<CollectionTabProps> = ({
   const [rarityFilter, setRarityFilter] = useState<Rarity | 'todas'>('todas');
   const [chestShaking, setChestShaking] = useState(false);
   const [revealedReward, setRevealedReward] = useState<GachaReward | null>(null);
+  const [inspectedMascotId, setInspectedMascotId] = useState<MascotId | null>(null);
+  const [modalDrinkKey, setModalDrinkKey] = useState(0);
 
   const unlockedMascotSet = new Set(unlockedMascotIds);
   const unlockedMaterialSet = new Set(unlockedGlassMaterialIds);
@@ -239,63 +248,82 @@ export const CollectionTab: React.FC<CollectionTabProps> = ({
                       const cardPercent = isActive ? Math.max(28, todayClampedPercent) : 66;
 
                       return (
-                        <button
-                          key={mascot.id}
-                          type="button"
-                          disabled={!isUnlocked}
-                          onClick={() => isUnlocked && onSelectMascot(mascot.id)}
-                          aria-pressed={isActive}
-                          aria-label={
-                            isUnlocked
-                              ? `${mascot.name} (${meta.label})${isActive ? ' — ativo' : ' — tocar para equipar'}`
-                              : `${mascot.name} bloqueado: ${mascot.unlockConditionText}`
-                          }
-                          className={`btn-spring relative flex flex-col items-center rounded-2xl border p-3 text-center ${
-                            isActive
-                              ? `${meta.activeRingClass} bg-white dark:bg-[#141C2E]`
-                              : isUnlocked
-                                ? `${meta.borderClass} bg-white hover:bg-slate-50 dark:bg-[#101522] dark:hover:bg-[#141B2D]`
-                                : 'cursor-not-allowed border-slate-200/80 bg-slate-100/75 opacity-80 dark:border-slate-800/80 dark:bg-[#0C101B]'
-                          }`}
-                        >
-                          {/* Top-right status icon */}
-                          <div className="absolute top-2.5 right-2.5">
-                            {isActive ? (
-                              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#D4AF37] text-slate-950">
-                                <Check className="h-3.5 w-3.5 stroke-[2.8]" />
-                              </span>
-                            ) : !isUnlocked ? (
-                              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                                <Lock className="h-3.5 w-3.5" />
-                              </span>
-                            ) : null}
-                          </div>
+                        <div key={mascot.id} className="relative">
+                          <button
+                            type="button"
+                            disabled={!isUnlocked}
+                            onClick={() => isUnlocked && onSelectMascot(mascot.id)}
+                            aria-pressed={isActive}
+                            aria-label={
+                              isUnlocked
+                                ? `${mascot.name} (${meta.label})${isActive ? ' — ativo' : ' — tocar para equipar'}`
+                                : `${mascot.name} bloqueado: ${mascot.unlockConditionText}`
+                            }
+                            className={`btn-spring relative flex h-full w-full flex-col items-center rounded-2xl border p-3 text-center ${
+                              isActive
+                                ? `${meta.activeRingClass} bg-white dark:bg-[#141C2E]`
+                                : isUnlocked
+                                  ? `${meta.borderClass} bg-white hover:bg-slate-50 dark:bg-[#101522] dark:hover:bg-[#141B2D]`
+                                  : 'cursor-not-allowed border-slate-200/80 bg-slate-100/75 opacity-80 dark:border-slate-800/80 dark:bg-[#0C101B]'
+                            }`}
+                          >
+                            {/* Top-right status icon */}
+                            <div className="absolute top-2.5 right-2.5">
+                              {isActive ? (
+                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#D4AF37] text-slate-950">
+                                  <Check className="h-3.5 w-3.5 stroke-[2.8]" />
+                                </span>
+                              ) : !isUnlocked ? (
+                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                  <Lock className="h-3.5 w-3.5" />
+                                </span>
+                              ) : null}
+                            </div>
 
-                          <div className="my-0.5 flex items-center justify-center">
-                            <MascotLiquidSvg
-                              mascot={mascot}
-                              layers={cardLayers}
-                              clampedPercent={cardPercent}
-                              glassMaterialId={isActive ? activeGlassMaterialId : 'cristal'}
-                              liquidEffectId={isActive ? activeLiquidEffectId : 'nenhum'}
-                              size="card"
-                              locked={!isUnlocked}
-                            />
-                          </div>
+                            <div className="my-0.5 flex items-center justify-center">
+                              <MascotLiquidSvg
+                                mascot={mascot}
+                                layers={cardLayers}
+                                clampedPercent={cardPercent}
+                                glassMaterialId={isActive ? activeGlassMaterialId : 'cristal'}
+                                liquidEffectId={isActive ? activeLiquidEffectId : 'nenhum'}
+                                size="card"
+                                locked={!isUnlocked}
+                              />
+                            </div>
 
-                          <h3 className="font-display mt-1 text-sm font-bold leading-tight text-slate-900 dark:text-white">
-                            {mascot.name}
-                          </h3>
+                            <h3 className="font-display mt-1 text-sm font-bold leading-tight text-slate-900 dark:text-white">
+                              {mascot.name}
+                            </h3>
 
-                          <p className={`mt-0.5 text-[11px] font-medium ${meta.textClass}`}>
-                            {meta.label}
-                            {isActive ? ' · Ativo' : ''}
-                          </p>
+                            <p className={`mt-0.5 text-[11px] font-medium ${meta.textClass}`}>
+                              {meta.label}
+                              {isActive ? ' · Ativo' : ''}
+                            </p>
 
-                          <p className="mt-1 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
-                            {isUnlocked ? mascot.subtitle : mascot.unlockConditionText}
-                          </p>
-                        </button>
+                            <p className="mt-1 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+                              {isUnlocked ? mascot.subtitle : mascot.unlockConditionText}
+                            </p>
+                          </button>
+
+                          {/* Discreet 3D Inspection Modal trigger (keeps 16-card grid 100% lightweight SVG) */}
+                          {isUnlocked && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setModalDrinkKey(0);
+                                setInspectedMascotId(mascot.id);
+                              }}
+                              data-testid={`inspect-3d-${mascot.id}`}
+                              aria-label={`Inspecionar ${mascot.name} em 3D`}
+                              title={`Ver ${mascot.name} em 3D`}
+                              className="btn-spring absolute top-2 left-2 z-10 inline-flex min-h-[28px] items-center gap-1 rounded-lg border border-slate-200/90 bg-white/95 px-2 text-[10px] font-bold text-slate-700 shadow-xs hover:border-[#D4AF37]/70 hover:text-amber-700 dark:border-slate-700 dark:bg-[#101522]/95 dark:text-slate-200 dark:hover:text-[#F3D77A]"
+                            >
+                              <Box className="h-3 w-3 shrink-0" />
+                              <span>3D</span>
+                            </button>
+                          )}
+                        </div>
                       );
                     })}
                   </div>
@@ -406,17 +434,28 @@ export const CollectionTab: React.FC<CollectionTabProps> = ({
       {/* ============================================================= */}
       {subTab === 'alquimia' && (
         <div className="space-y-5">
-          {/* Live 3D Mascot Preview */}
+          {/* Live Single-WebGLRenderer 3D Alchemy Preview (Pedestal + Rim Light + 3D Particles) */}
           <section className="flex flex-col items-center rounded-3xl border border-slate-200 bg-white px-4 py-4 text-center dark:border-slate-800 dark:bg-[#101522]">
-            <MascotLiquidSvg
-              mascot={activeMascot}
-              layers={previewLayersForAlchemy}
-              clampedPercent={Math.max(48, todayClampedPercent)}
-              glassMaterialId={activeGlassMaterialId}
-              liquidEffectId={activeLiquidEffectId}
-              size="modal"
-            />
-            <p className="font-display mt-2 text-base font-bold text-slate-900 dark:text-white">
+            {!revealedReward && !inspectedMascotId ? (
+              <Character3DStage
+                mascotId={activeMascot.id}
+                rarity={activeMascot.rarity}
+                mascotName={activeMascot.name}
+                glassMaterialId={activeGlassMaterialId}
+                liquidEffectId={activeLiquidEffectId}
+                layers={previewLayersForAlchemy}
+                clampedPercent={Math.max(52, todayClampedPercent)}
+                rawPercent={Math.max(52, todayClampedPercent)}
+                drinkColor={lastDrinkColor}
+                soundEnabled={soundEnabled}
+                showProgressRing={false}
+                allowZoom={false}
+                size="alchemy"
+              />
+            ) : (
+              <div className="h-[220px] w-[220px]" />
+            )}
+            <p className="font-display mt-1 text-base font-bold text-slate-900 dark:text-white">
               {activeMascot.name}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -432,7 +471,7 @@ export const CollectionTab: React.FC<CollectionTabProps> = ({
               className="font-display mb-2.5 flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white"
             >
               <FlaskConical className="h-4 w-4 text-[#D4AF37]" />
-              <span>Materiais Alquímicos de Vidro</span>
+              <span>Materiais Alquímicos (Pedestal &amp; Luz 3D)</span>
             </h2>
 
             <div className="space-y-2">
@@ -501,7 +540,7 @@ export const CollectionTab: React.FC<CollectionTabProps> = ({
               className="font-display mb-2.5 flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white"
             >
               <Sparkles className="h-4 w-4 text-[#D4AF37]" />
-              <span>Efeitos Mágicos no Líquido</span>
+              <span>Efeitos Mágicos 3D</span>
             </h2>
 
             <div className="space-y-2">
@@ -663,6 +702,96 @@ export const CollectionTab: React.FC<CollectionTabProps> = ({
           </div>
         </div>
       )}
+
+      {/* Single-WebGLRenderer 3D Creature Inspection Modal */}
+      {inspectedMascotId && (() => {
+        const inspected = MASCOT_MAP[inspectedMascotId];
+        if (!inspected) return null;
+        const rarMeta = RARITY_META[inspected.rarity];
+        const isAlreadyEquipped = inspected.id === activeMascotId;
+
+        return (
+          <div
+            data-testid="modal-inspect-3d"
+            className="modal-safe-padding fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="inspect-3d-title"
+          >
+            <div className="relative max-h-[90dvh] w-full max-w-[368px] overflow-y-auto rounded-3xl border border-[#D4AF37]/65 bg-white p-5 text-center shadow-2xl dark:bg-[#101522]">
+              <button
+                type="button"
+                onClick={() => setInspectedMascotId(null)}
+                aria-label="Fechar visualização 3D"
+                className="btn-spring absolute top-3.5 right-3.5 z-20 flex h-10 w-10 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <p className={`text-xs font-bold ${rarMeta.textClass}`}>{rarMeta.label}</p>
+              <h2
+                id="inspect-3d-title"
+                className="font-display mt-0.5 text-xl font-bold text-slate-900 dark:text-white"
+              >
+                {inspected.name}
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                {inspected.subtitle}
+              </p>
+
+              <div className="my-2 flex flex-col items-center justify-center">
+                <Character3DStage
+                  mascotId={inspected.id}
+                  rarity={inspected.rarity}
+                  mascotName={inspected.name}
+                  glassMaterialId={activeGlassMaterialId}
+                  liquidEffectId={activeLiquidEffectId}
+                  layers={todayLayers}
+                  clampedPercent={Math.max(60, todayClampedPercent)}
+                  rawPercent={Math.max(60, todayClampedPercent)}
+                  drinkColor={lastDrinkColor}
+                  drinkTriggerKey={modalDrinkKey}
+                  soundEnabled={soundEnabled}
+                  showProgressRing={false}
+                  allowZoom
+                  size="modal"
+                />
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                  Arraste para girar 360° · Pinça/scroll para zoom
+                </p>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setModalDrinkKey((k) => k + 1)}
+                  className="btn-spring flex min-h-[46px] items-center justify-center gap-1.5 rounded-2xl border border-sky-500/45 bg-sky-500/12 px-3 text-xs font-bold text-sky-700 hover:bg-sky-500/20 dark:text-sky-300"
+                >
+                  <Droplets className="h-4 w-4 shrink-0" />
+                  <span>Beber agora</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isAlreadyEquipped}
+                  onClick={() => {
+                    onSelectMascot(inspected.id);
+                    setInspectedMascotId(null);
+                  }}
+                  className={`btn-spring flex min-h-[46px] items-center justify-center gap-1.5 rounded-2xl px-3 text-xs font-bold ${
+                    isAlreadyEquipped
+                      ? 'cursor-default border border-[#D4AF37]/40 bg-[#D4AF37]/15 text-amber-800 dark:text-[#F3D77A]'
+                      : 'bg-[#D4AF37] text-slate-950 hover:brightness-105'
+                  }`}
+                >
+                  <Check className="h-4 w-4 shrink-0" />
+                  <span>{isAlreadyEquipped ? 'Equipada' : 'Equipar'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

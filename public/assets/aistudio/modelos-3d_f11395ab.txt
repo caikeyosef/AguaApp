@@ -1,0 +1,2708 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GotaViva — Vitrine 3D dos 16 Personagens</title>
+
+  <!-- Fonte Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            obsidian: '#07090F',
+            panel: '#101522',
+            gold: '#D4AF37',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Import Map Three.js v0.160.0 via jsDelivr -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #07090F;
+      color: #f8fafc;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Fundo atmosférico estilo Boticário Moderno */
+    .apothecary-bg {
+      background-image:
+        radial-gradient(circle at 18% 12%, rgba(212, 175, 55, 0.09), transparent 42%),
+        radial-gradient(circle at 82% 18%, rgba(56, 189, 248, 0.09), transparent 40%),
+        radial-gradient(circle at 50% 95%, rgba(168, 85, 247, 0.07), transparent 45%);
+    }
+
+    /* Canvas responsivo e fluido para gestos */
+    #stage-canvas-wrap canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+      touch-action: none;
+      cursor: grab;
+    }
+    #stage-canvas-wrap canvas:active {
+      cursor: grabbing;
+    }
+
+    /* Barra de rolagem discreta para a lista de personagens */
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 9999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(212, 175, 55, 0.28);
+      border-radius: 9999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(212, 175, 55, 0.5);
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translate(-50%, -10px) scale(0.96); }
+      to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+    }
+    .toast-anim {
+      animation: toastIn 0.25s ease-out forwards;
+    }
+
+    @keyframes bubblePop {
+      0% { transform: scale(0.96); opacity: 0.7; }
+      60% { transform: scale(1.02); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .speech-pop {
+      animation: bubblePop 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  </style>
+</head>
+
+<body class="apothecary-bg min-h-screen antialiased selection:bg-amber-400/25 selection:text-amber-200">
+
+  <!-- Toast de Notificação (substitui qualquer alert) -->
+  <div
+    id="toast-box"
+    role="status"
+    aria-live="polite"
+    class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-[#101522]/95 border border-gold/40 shadow-2xl shadow-black/70 text-xs sm:text-sm font-medium text-amber-100 backdrop-blur-md flex items-center gap-2 max-w-[92vw]"
+  >
+    <span id="toast-icon" class="text-gold">✦</span>
+    <span id="toast-text">Pronto</span>
+  </div>
+
+  <!-- Layout Principal -->
+  <div class="max-w-[1440px] mx-auto px-3 sm:px-5 py-3 sm:py-5 flex flex-col gap-3 sm:gap-4 min-h-screen">
+
+    <!-- Cabeçalho Boticário Moderno -->
+    <header class="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-panel/90 border border-white/10 backdrop-blur-xl shadow-lg shadow-black/30">
+      <div class="flex items-center gap-3 min-w-0">
+        <!-- Brasão GotaViva -->
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-300/20 via-amber-500/15 to-sky-500/20 border border-gold/45 flex items-center justify-center shrink-0 shadow-inner">
+          <svg class="w-5 h-5 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" fill="rgba(212,175,55,0.22)"/>
+            <path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/>
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white truncate">GotaViva</h1>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-gold/15 text-amber-200 border border-gold/30">Boticário 3D</span>
+          </div>
+          <p class="text-[11px] sm:text-xs text-slate-400 truncate">16 criaturas sólidas · Coleção Vinyl Toy &amp; Clay PBR</p>
+        </div>
+      </div>
+
+      <!-- Ações Rápidas do Topo -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button
+          id="btn-sound"
+          type="button"
+          class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-obsidian/80 hover:bg-white/5 border border-white/10 hover:border-gold/40 text-xs font-semibold text-slate-200 transition active:scale-95"
+          title="Ativar ou desativar som sintético"
+        >
+          <span id="sound-emoji">🔊</span>
+          <span class="hidden sm:inline" id="sound-text">Som</span>
+        </button>
+
+        <button
+          id="btn-reset-cam"
+          type="button"
+          class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-obsidian/80 hover:bg-white/5 border border-white/10 hover:border-sky-400/40 text-xs font-semibold text-slate-200 transition active:scale-95"
+          title="Resetar ângulo da câmera 3D"
+        >
+          <span>↺</span>
+          <span class="hidden sm:inline">Resetar Câmera</span>
+        </button>
+
+        <button
+          id="btn-export-glb"
+          type="button"
+          class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-xs font-bold text-amber-200 transition active:scale-95"
+          title="Baixar modelo 3D em formato .GLB"
+        >
+          <span>⬇</span>
+          <span class="hidden sm:inline">Baixar .GLB</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Corpo Principal: Palco 3D + Seletor dos 16 Personagens -->
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_390px] gap-4 flex-1 items-start">
+
+      <!-- COLUNA ESQUERDA: VITRINE 3D INTERATIVA -->
+      <section class="rounded-3xl bg-panel/85 border border-white/10 shadow-2xl shadow-black/50 overflow-hidden flex flex-col">
+
+        <!-- Cabeçalho do Personagem Selecionado + Balão de Fala -->
+        <div class="p-4 sm:p-5 pb-3 border-b border-white/5 flex flex-col gap-3">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span id="char-rarity-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border">
+                  Comum · Bosque &amp; Pântano
+                </span>
+                <span id="char-index-badge" class="text-[11px] font-semibold text-slate-500">#01 / 16</span>
+              </div>
+              <h2 id="char-name" class="text-xl sm:text-2xl font-extrabold tracking-tight text-white">Gnomo Rabugento</h2>
+              <p id="char-subtitle" class="text-xs sm:text-sm text-slate-400">Fiscal oficial da hidratação da guilda</p>
+            </div>
+
+            <!-- Indicador de estado da animação -->
+            <div id="anim-status-pill" class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+              <span id="anim-dot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span id="anim-status-text">Em repouso</span>
+            </div>
+          </div>
+
+          <!-- Balão de Fala Reativo -->
+          <div id="speech-bubble" class="relative rounded-2xl bg-obsidian/80 border border-gold/25 px-4 py-2.5 text-xs sm:text-sm text-slate-200 flex items-center gap-2.5">
+            <span class="text-base shrink-0">💬</span>
+            <p id="speech-text" class="leading-snug italic text-slate-200">
+              “Beba logo essa água antes que eu dê advertência na guilda!”
+            </p>
+          </div>
+        </div>
+
+        <!-- Palco 3D WebGL -->
+        <div class="relative w-full h-[390px] sm:h-[470px] lg:h-[520px] bg-gradient-to-b from-[#0a0f1d] via-[#080c17] to-[#06080e] overflow-hidden">
+          <!-- Glow sutil por trás do personagem conforme raridade -->
+          <div
+            id="stage-glow"
+            class="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full blur-3xl opacity-25 transition-colors duration-500"
+            style="background: radial-gradient(circle, #94a3b8 0%, transparent 70%);"
+          ></div>
+
+          <!-- Container do Renderer Three.js -->
+          <div id="stage-canvas-wrap" class="relative z-10 w-full h-full"></div>
+
+          <!-- Mensagem de carregamento / fallback -->
+          <div id="stage-loader" class="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-obsidian/80 text-xs text-slate-300">
+            <div class="w-7 h-7 rounded-full border-2 border-gold/30 border-t-gold animate-spin"></div>
+            <span>Preparando estúdio 3D...</span>
+          </div>
+
+          <!-- Dica discreta de controle 360° -->
+          <div class="pointer-events-none absolute bottom-3 left-3 z-20 px-3 py-1 rounded-full bg-obsidian/75 backdrop-blur-md border border-white/10 text-[11px] text-slate-300 flex items-center gap-1.5">
+            <span class="text-sky-400">↻</span>
+            <span>Arraste para girar 360° · Pinça/Scroll para zoom</span>
+          </div>
+
+          <!-- Navegação rápida Anterior / Próximo no canto -->
+          <div class="absolute bottom-3 right-3 z-20 flex items-center gap-1.5">
+            <button
+              id="btn-prev-char"
+              type="button"
+              aria-label="Personagem anterior"
+              class="w-9 h-9 rounded-xl bg-obsidian/85 hover:bg-white/10 border border-white/15 text-slate-200 flex items-center justify-center font-bold transition active:scale-90"
+            >‹</button>
+            <button
+              id="btn-next-char"
+              type="button"
+              aria-label="Próximo personagem"
+              class="w-9 h-9 rounded-xl bg-obsidian/85 hover:bg-white/10 border border-white/15 text-slate-200 flex items-center justify-center font-bold transition active:scale-90"
+            >›</button>
+          </div>
+        </div>
+
+        <!-- Barra de Controles de Animação -->
+        <div class="p-4 sm:p-5 bg-panel/95 border-t border-white/5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <button
+            id="btn-drink"
+            type="button"
+            class="flex-1 flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-sky-500 via-cyan-500 to-sky-400 hover:brightness-110 text-slate-950 font-extrabold text-sm sm:text-base shadow-lg shadow-sky-500/25 transition active:scale-[0.98]"
+          >
+            <span class="text-lg">💧</span>
+            <span>Beber Água</span>
+          </button>
+
+          <button
+            id="btn-loop"
+            type="button"
+            aria-pressed="false"
+            class="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-obsidian/80 hover:bg-white/5 border border-white/15 text-slate-200 font-semibold text-sm transition active:scale-[0.98]"
+          >
+            <span>🔁</span>
+            <span id="loop-label">Beber em Loop: OFF</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- COLUNA DIREITA: SELETOR DOS 16 PERSONAGENS POR RARIDADE -->
+      <aside class="rounded-3xl bg-panel/85 border border-white/10 shadow-2xl shadow-black/50 p-4 flex flex-col gap-3 lg:max-h-[760px]">
+        <div class="flex items-center justify-between border-b border-white/5 pb-3">
+          <div>
+            <h3 class="text-sm font-extrabold uppercase tracking-wider text-amber-200">Catálogo da Guilda</h3>
+            <p class="text-[11px] text-slate-400">Toque em qualquer criatura para inspecionar e testar o gole</p>
+          </div>
+          <span class="px-2.5 py-1 rounded-xl bg-obsidian/90 border border-gold/25 text-xs font-bold text-gold">16/16</span>
+        </div>
+
+        <!-- Lista agrupada por raridade -->
+        <div id="character-catalog" class="custom-scroll overflow-y-auto pr-1 flex flex-col gap-4 max-h-[460px] lg:max-h-[650px]">
+          <!-- Renderizado dinamicamente via JS -->
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- MOTOR 3D COMPLETO + FÁBRICA DOS 16 PERSONAGENS SÓLIDOS + ANIMAÇÕES + ÁUDIO + EXPORTADOR GLB -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+    import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+
+    // =========================================================================
+    // 1. METADADOS DOS 16 PERSONAGENS & CONFIGURAÇÃO DE RARIDADES
+    // =========================================================================
+    const RARITIES = {
+      comum: {
+        key: 'comum',
+        title: 'Comuns · Bosque & Pântano',
+        short: 'Comum',
+        hex: 0x94a3b8,
+        css: '#94a3b8',
+        badgeClass: 'bg-slate-400/15 text-slate-200 border-slate-400/35',
+        cardRing: 'border-slate-400/35',
+        activeRing: 'border-slate-200 bg-slate-400/15 shadow-slate-400/20',
+      },
+      raro: {
+        key: 'raro',
+        title: 'Raros · Criptídeos & Lendas Bizarras',
+        short: 'Raro',
+        hex: 0x38bdf8,
+        css: '#38bdf8',
+        badgeClass: 'bg-sky-500/15 text-sky-300 border-sky-400/35',
+        cardRing: 'border-sky-400/30',
+        activeRing: 'border-sky-300 bg-sky-500/15 shadow-sky-500/25',
+      },
+      epico: {
+        key: 'epico',
+        title: 'Épicos · Folclore & Magia',
+        short: 'Épico',
+        hex: 0xa855f7,
+        css: '#a855f7',
+        badgeClass: 'bg-purple-500/15 text-purple-300 border-purple-400/35',
+        cardRing: 'border-purple-400/30',
+        activeRing: 'border-purple-300 bg-purple-500/15 shadow-purple-500/25',
+      },
+      lendario: {
+        key: 'lendario',
+        title: 'Lendários · Relíquias de Ouro',
+        short: 'Lendário',
+        hex: 0xf59e0b,
+        css: '#f59e0b',
+        badgeClass: 'bg-amber-500/15 text-amber-200 border-amber-400/45',
+        cardRing: 'border-amber-400/35',
+        activeRing: 'border-amber-300 bg-amber-500/15 shadow-amber-500/25',
+      },
+    };
+
+    const CHARACTERS = [
+      // Comuns
+      {
+        id: 'gnomo',
+        num: '01',
+        name: 'Gnomo Rabugento',
+        subtitle: 'Fiscal oficial da hidratação da guilda',
+        rarity: 'comum',
+        icon: '🧙‍♂️',
+        vessel: 'Caneca de carvalho',
+        idleQuote: '“Beba logo essa água antes que eu dê advertência na guilda!”',
+        drinkQuotes: [
+          '“Hmpf! Até que essa água gelada presta...”',
+          '“Glug! Fiscal hidratado, multa cancelada por hoje.”',
+          '“Não conte a ninguém, mas isso me deixou menos rabugento.”',
+        ],
+      },
+      {
+        id: 'sapo',
+        num: '02',
+        name: 'Sapo Mago',
+        subtitle: 'Mestre em poções e cochilos no brejo',
+        rarity: 'comum',
+        icon: '🐸',
+        vessel: 'Cálice mágico',
+        idleQuote: '“Ribbit... a melhor poção de mana é H2O puro.”',
+        drinkQuotes: [
+          '“COAX! Papo cheio, feitiço de hidratação nível 99!”',
+          '“Mais refrescante que vitória-régia na madrugada.”',
+          '“Glub-ribbit! Agora posso tirar meu cochilo mágico.”',
+        ],
+      },
+      {
+        id: 'cogumelo',
+        num: '03',
+        name: 'Cogumelo Vivo',
+        subtitle: 'Sonolento 24 horas por dia',
+        rarity: 'comum',
+        icon: '🍄',
+        vessel: 'Copinho de folha c/ canudo',
+        idleQuote: '“Zzz... alguém segura meu canudinho? Tô com preguiça...”',
+        drinkQuotes: [
+          '“Shluuurp... ah, umidade boa pro meu chapéu...”',
+          '“Beber de canudo cansa, mas valeu a pena... zzz.”',
+          '“Hidratado e pronto pra mais 14 horas de soneca.”',
+        ],
+      },
+      {
+        id: 'goblin',
+        num: '04',
+        name: 'Goblin do Café',
+        subtitle: 'Movido a espresso e sarcasmo puro',
+        rarity: 'comum',
+        icon: '👺',
+        vessel: 'Canecão gigante',
+        idleQuote: '“ÁGUA?! Tá bom, tá bom, um gole pra rebater o quinto café!”',
+        drinkQuotes: [
+          '“GLUG-GLUG-GLUG! Ok, minhas pálpebras pararam de tremer!”',
+          '“Sem cafeína, mas bateu forte nos neurônios! AHHH!”',
+          '“Hidratação turbo! Meus rins acabaram de aplaudir de pé!”',
+        ],
+      },
+      // Raros
+      {
+        id: 'nessie',
+        num: '05',
+        name: 'Nessie (Lago Ness)',
+        subtitle: 'Desfocada nas fotos, nítida na hidratação',
+        rarity: 'raro',
+        icon: '🦕',
+        vessel: 'Taça do lago',
+        idleQuote: '“Em alta definição só na hora de beber água!”',
+        drinkQuotes: [
+          '“Sentiu o gole descendo os 3 metros de pescoço? Maravilha!”',
+          '“Água doce fresquinha, melhor que a do Lago Ness!”',
+          '“Zero desfoque, 100% hidratada.”',
+        ],
+      },
+      {
+        id: 'yeti',
+        num: '06',
+        name: 'Yeti Gelado',
+        subtitle: 'Grande, parrudo e zero noção de perigo',
+        rarity: 'raro',
+        icon: '❄️',
+        vessel: 'Caneca de gelo',
+        idleQuote: '“Yeti gosta de água trincando de gelada! Hehe!”',
+        drinkQuotes: [
+          '“BRRR-AHHH! Congelou o cérebro, adorei!”',
+          '“Caneca de gelo nunca esquenta, estratégia de gênio!”',
+          '“Yeti forte, Yeti hidratado!”',
+        ],
+      },
+      {
+        id: 'et',
+        num: '07',
+        name: 'ET de Varginha',
+        subtitle: 'Cabeção de 3 litros de sabedoria cósmica',
+        rarity: 'raro',
+        icon: '👽',
+        vessel: 'Copo cósmico c/ canudo espiral',
+        idleQuote: '“Busquem conhecimento... e bebam bastante água.”',
+        drinkQuotes: [
+          '“Shluurp intergaláctico! Sabedoria hidratada em 100%.”',
+          '“No meu planeta água é moeda rara. Aqui é de graça!”',
+          '“Canudo espiral melhora a absorção cósmica de H2O.”',
+        ],
+      },
+      {
+        id: 'troll',
+        num: '08',
+        name: 'Troll da Ponte',
+        subtitle: 'Só libera passagem após 250 ml de água',
+        rarity: 'raro',
+        icon: '🪨',
+        vessel: 'Caneca de pedra',
+        idleQuote: '“Pedágio da ponte: um golão caprichado agora!”',
+        drinkQuotes: [
+          '“GRRR-GLUG! Ahhh! Passagem liberada, viajante!”',
+          '“Até meu musgo do ombro deu uma revigorada!”',
+          '“Caneca pesada de granito, gole pesado de respeito.”',
+        ],
+      },
+      // Épicos
+      {
+        id: 'saci',
+        num: '09',
+        name: 'Saci',
+        subtitle: 'Redemoinho de hidratação e travessuras',
+        rarity: 'epico',
+        icon: '🌪️',
+        vessel: 'Cabaça artesanal',
+        idleQuote: '“Fiu-fiu! Girar o dia inteiro dá uma sede danada!”',
+        drinkQuotes: [
+          '“Água fresquinha na cabaça! Agora ninguém me segura!”',
+          '“Hidratei no meio do redemoinho sem derramar uma gota!”',
+          '“Travessura boa mesmo é bater a meta de água!”',
+        ],
+      },
+      {
+        id: 'fantasma',
+        num: '10',
+        name: 'Fantasma do Poço',
+        subtitle: 'Flutuando leve e assustadoramente hidratado',
+        rarity: 'epico',
+        icon: '👻',
+        vessel: 'Mini balde de poço',
+        idleQuote: '“Buuu! Tirei essa água direto do fundo do poço!”',
+        drinkQuotes: [
+          '“Ooooh! Água geladinha de nascente, assustadoramente boa!”',
+          '“Não atravessa minha barriga não — sou 100% porcelana sólida!”',
+          '“Hidratação de outro mundo! Buuu-ahhh!”',
+        ],
+      },
+      {
+        id: 'mimico',
+        num: '11',
+        name: 'Mímico (Baú Vivo)',
+        subtitle: 'Finge ser tesouro mas só quer mais água',
+        rarity: 'epico',
+        icon: '🧰',
+        vessel: 'Copo flutuante',
+        idleQuote: '“Cuidado! Só abro a tampa pra ouro... ou água gelada!”',
+        drinkQuotes: [
+          '“NHAC-GLUG-NHAC! Melhor que engolir aventureiro!”',
+          '“O verdadeiro tesouro era a hidratação pelo caminho!”',
+          '“Tampa fechada, sede derrotada!”',
+        ],
+      },
+      {
+        id: 'coruja',
+        num: '12',
+        name: 'Coruja Alquimista',
+        subtitle: 'Te julgando silenciosamente pelo monóculo',
+        rarity: 'epico',
+        icon: '🦉',
+        vessel: 'Frasco Erlenmeyer',
+        idleQuote: '“Hmph. Vejo pelo meu monóculo que você bebeu pouca água.”',
+        drinkQuotes: [
+          '“Exatamente 250 ml. Fórmula impecável, refinadíssima.”',
+          '“Pruu-ahhh. Aprovação científica da guilda concedida.”',
+          '“Degustar H2O em vidraria de laboratório eleva o espírito.”',
+        ],
+      },
+      // Lendários
+      {
+        id: 'dragao',
+        num: '13',
+        name: 'Dragão Bebê Gordinho',
+        subtitle: 'Cospe bolhinhas e domina o barrigão',
+        rarity: 'lendario',
+        icon: '🐉',
+        vessel: 'Taça dourada',
+        idleQuote: '“Rawr! Fogo cansa, prefiro soltar bolhinhas de água!”',
+        drinkQuotes: [
+          '“Blub-blub-blub! Olha minhas bolhinhas lendárias!”',
+          '“Barrigão cheio de água, asinhas felizes!”',
+          '“Dragão hidratado brilha igual ouro!”',
+        ],
+      },
+      {
+        id: 'genio',
+        num: '14',
+        name: 'Gênio da Lâmpada',
+        subtitle: 'Três desejos: água, água e mais água',
+        rarity: 'lendario',
+        icon: '🧞',
+        vessel: 'Cálice real cravejado',
+        idleQuote: '“Seu desejo de ficar hidratado é uma ordem, mestre!”',
+        drinkQuotes: [
+          '“MAGNÍFICO! Hidratação digna de mil e uma noites!”',
+          '“Poder cósmico fenomenal... num cálice geladinho!”',
+          '“Primeiro desejo cumprido: sede eliminada!”',
+        ],
+      },
+      {
+        id: 'kraken',
+        num: '15',
+        name: 'Kraken Abissal',
+        subtitle: 'Oito tentáculos, todos segurando copos',
+        rarity: 'lendario',
+        icon: '🐙',
+        vessel: 'Combo de copinhos',
+        idleQuote: '“Por que beber um copo se tenho oito tentáculos?!”',
+        drinkQuotes: [
+          '“GLUG TRIPLO! Eficiência abissal máxima!”',
+          '“Moro no oceano, mas água doce no copinho é outra coisa!”',
+          '“Todos os tentáculos concordam: refrescante demais!”',
+        ],
+      },
+      {
+        id: 'mula',
+        num: '16',
+        name: 'Mula Sem Cabeça',
+        subtitle: 'Chama lendária que vira energia aquática',
+        rarity: 'lendario',
+        icon: '🔥',
+        vessel: 'Jarra flutuante',
+        idleQuote: '“Galopar soltando fogo dá sede! Despeja essa jarra aí!”',
+        drinkQuotes: [
+          '“TSSSSS-AHHH! Chama azul refrescante ativada!”',
+          '“De labareda ardente pra vapor gelado de hidratação!”',
+          '“Folclore brasileiro no auge da refrescância!”',
+        ],
+      },
+    ];
+
+    // =========================================================================
+    // 2. ESTADO GLOBAL & UTILITÁRIOS DE UI
+    // =========================================================================
+    const state = {
+      currentId: 'gnomo',
+      soundEnabled: true,
+      loopEnabled: false,
+      isDrinking: false,
+      drinkTime: 0,
+      drinkDuration: 3.35,
+      loopCooldown: 0,
+      gulpBeatPlayed: [false, false, false],
+      ahhhPlayed: false,
+      quoteIdx: 0,
+    };
+
+    const toastBox = document.getElementById('toast-box');
+    const toastText = document.getElementById('toast-text');
+    let toastTimer = null;
+
+    function showToast(msg) {
+      toastText.textContent = msg;
+      toastBox.classList.remove('hidden');
+      toastBox.classList.remove('toast-anim');
+      void toastBox.offsetWidth;
+      toastBox.classList.add('toast-anim');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toastBox.classList.add('hidden');
+      }, 2800);
+    }
+
+    // =========================================================================
+    // 3. ÁUDIO SINTÉTICO (Web Audio API — Glug-Glug-Glug + Ahhh!)
+    // =========================================================================
+    let audioCtx = null;
+
+    function ensureAudio() {
+      if (!state.soundEnabled) return null;
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return null;
+        if (!audioCtx) audioCtx = new Ctx();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        return audioCtx;
+      } catch {
+        return null;
+      }
+    }
+
+    function playGulpSound(beatIndex = 0) {
+      const ctx = ensureAudio();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const baseFreq = 210 + beatIndex * 42;
+
+        // Som cômico de "glug" (bolha grave subindo rapidamente)
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(baseFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 2.45, now + 0.085);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.15, now + 0.16);
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.18, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.18);
+      } catch {
+        // Ignora bloqueio de autoplay antes da interação do usuário
+      }
+    }
+
+    function playAhhhSound() {
+      const ctx = ensureAudio();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        // Acorde cristalino refrescante ("Aaaah!")
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          const t = now + idx * 0.045;
+          osc.frequency.setValueAtTime(freq, t);
+          gain.gain.setValueAtTime(0.001, t);
+          gain.gain.linearRampToValueAtTime(0.075, t + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0008, t + 0.36);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.38);
+        });
+      } catch {
+        // Silencioso
+      }
+    }
+
+    function playSwitchSound() {
+      const ctx = ensureAudio();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(420, now);
+        osc.frequency.exponentialRampToValueAtTime(640, now + 0.07);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      } catch {
+        // Silencioso
+      }
+    }
+
+    // =========================================================================
+    // 4. FÁBRICA DE MATERIAIS PBR 100% OPACOS (VINYL TOY / CLAY 3D)
+    // =========================================================================
+    // Cache de materiais opacos para performance e exportação GLB limpa
+    const matCache = new Map();
+
+    function clayMat(hex, roughness = 0.50, metalness = 0.04, emissive = 0x000000, emissiveIntensity = 0) {
+      const key = `${hex}_${roughness}_${metalness}_${emissive}_${emissiveIntensity}`;
+      if (matCache.has(key)) return matCache.get(key);
+      const mat = new THREE.MeshStandardMaterial({
+        color: hex,
+        roughness,
+        metalness,
+        emissive,
+        emissiveIntensity,
+        transparent: false,
+        opacity: 1.0,
+      });
+      matCache.set(key, mat);
+      return mat;
+    }
+
+    function metalMat(hex = 0xd4af37, roughness = 0.24, metalness = 0.86) {
+      return clayMat(hex, roughness, metalness);
+    }
+
+    // Materiais comuns compartilhados (todos 100% sólidos e opacos)
+    const M = {
+      eyeDark: clayMat(0x0b0f19, 0.08, 0.12),
+      eyeWhite: clayMat(0xffffff, 0.12, 0.0),
+      gold: metalMat(0xd4af37, 0.22, 0.88),
+      goldBright: metalMat(0xf5c542, 0.18, 0.90),
+      bronze: metalMat(0x9a6b35, 0.32, 0.78),
+      silver: metalMat(0xcbd5e1, 0.24, 0.85),
+      wood: clayMat(0x7c4a26, 0.68, 0.04),
+      woodDark: clayMat(0x4a2a14, 0.72, 0.04),
+      stone: clayMat(0x64748b, 0.78, 0.05),
+      blush: clayMat(0xf472b6, 0.55, 0.0),
+      // Único material aquoso (exclusivo para a água dentro dos copos e jato/gotas)
+      waterSurface: new THREE.MeshStandardMaterial({
+        color: 0x0ea5e9,
+        emissive: 0x0284c7,
+        emissiveIntensity: 0.35,
+        roughness: 0.08,
+        metalness: 0.1,
+      }),
+      waterStream: new THREE.MeshStandardMaterial({
+        color: 0x38bdf8,
+        emissive: 0x0ea5e9,
+        emissiveIntensity: 0.55,
+        roughness: 0.08,
+        metalness: 0.05,
+        transparent: true,
+        opacity: 0.9,
+      }),
+    };
+
+    // Helper genérico para criar mesh com sombra habilitada
+    function makeMesh(geo, mat, pos = [0, 0, 0], scale = [1, 1, 1], rot = [0, 0, 0]) {
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(pos[0], pos[1], pos[2]);
+      mesh.scale.set(scale[0], scale[1], scale[2]);
+      mesh.rotation.set(rot[0], rot[1], rot[2]);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      return mesh;
+    }
+
+    // Olho expressivo estilo Pixar/Vinyl Toy com catchlight branco duplo (100% opaco)
+    function makeEye(r = 0.085, sclera = false, pupilColor = null) {
+      const g = new THREE.Group();
+      if (sclera) {
+        g.add(makeMesh(new THREE.SphereGeometry(r, 20, 16), M.eyeWhite));
+        const pMat = pupilColor ? clayMat(pupilColor, 0.12, 0.1) : M.eyeDark;
+        g.add(makeMesh(new THREE.SphereGeometry(r * 0.62, 16, 14), pMat, [0, 0, r * 0.54]));
+        g.add(makeMesh(new THREE.SphereGeometry(r * 0.24, 10, 10), M.eyeWhite, [-r * 0.22, r * 0.24, r * 1.02]));
+      } else {
+        const pMat = pupilColor ? clayMat(pupilColor, 0.10, 0.12) : M.eyeDark;
+        g.add(makeMesh(new THREE.SphereGeometry(r, 20, 16), pMat));
+        g.add(makeMesh(new THREE.SphereGeometry(r * 0.34, 10, 10), M.eyeWhite, [-r * 0.28, r * 0.30, r * 0.78]));
+        g.add(makeMesh(new THREE.SphereGeometry(r * 0.16, 10, 10), M.eyeWhite, [r * 0.26, -r * 0.22, r * 0.84]));
+      }
+      return g;
+    }
+
+    // =========================================================================
+    // 5. FÁBRICA DE RECIPIENTES DE ÁGUA (CADA PERSONAGEM TEM O SEU)
+    // =========================================================================
+    function createVessel(type) {
+      const cup = new THREE.Group();
+      const spout = new THREE.Object3D();
+      spout.position.set(0, 0.22, 0);
+      cup.add(spout);
+
+      if (type === 'wood_mug') {
+        // Caneca de madeira com aros dourados e água azul no topo
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.15, 0.13, 0.30, 18), M.wood, [0, 0, 0]));
+        cup.add(makeMesh(new THREE.TorusGeometry(0.146, 0.018, 10, 22), M.gold, [0, 0.09, 0], [1, 1, 1], [Math.PI / 2, 0, 0]));
+        cup.add(makeMesh(new THREE.TorusGeometry(0.135, 0.018, 10, 22), M.gold, [0, -0.09, 0], [1, 1, 1], [Math.PI / 2, 0, 0]));
+        cup.add(makeMesh(new THREE.TorusGeometry(0.09, 0.022, 10, 18, Math.PI), M.woodDark, [0.14, 0, 0], [1, 1, 1], [0, 0, -Math.PI / 2]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.13, 0.13, 0.03, 18), M.waterSurface, [0, 0.145, 0]));
+        spout.position.set(-0.11, 0.16, 0);
+      } else if (type === 'chalice') {
+        // Cálice mágico dourado com água brilhante
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.15, 0.05, 0.20, 20), M.goldBright, [0, 0.09, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.03, 0.035, 0.16, 14), M.gold, [0, -0.06, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.09, 0.11, 0.04, 18), M.goldBright, [0, -0.15, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.132, 0.132, 0.025, 18), M.waterSurface, [0, 0.185, 0]));
+        spout.position.set(-0.10, 0.20, 0);
+      } else if (type === 'leaf_straw') {
+        // Copinho de folha verde com canudinho encurvado
+        const leafMat = clayMat(0x22c55e, 0.45);
+        const strawMat = clayMat(0xfef08a, 0.35);
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.13, 0.09, 0.22, 16), leafMat, [0, 0, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.11, 0.11, 0.025, 16), M.waterSurface, [0, 0.10, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.018, 0.018, 0.24, 10), strawMat, [0.02, 0.19, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.018, 0.018, 0.16, 10), strawMat, [-0.04, 0.31, 0], [1, 1, 1], [0, 0, 1.05]));
+        spout.position.set(-0.11, 0.34, 0);
+      } else if (type === 'giant_mug') {
+        // Canecão gigante do Goblin
+        const mugMat = clayMat(0xf5f5f4, 0.32);
+        const bandMat = clayMat(0xb45309, 0.42);
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.20, 0.18, 0.34, 20), mugMat, [0, 0, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.204, 0.20, 0.07, 20), bandMat, [0, 0.02, 0]));
+        cup.add(makeMesh(new THREE.TorusGeometry(0.11, 0.028, 10, 18, Math.PI), mugMat, [0.19, 0, 0], [1, 1, 1], [0, 0, -Math.PI / 2]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.175, 0.175, 0.03, 20), M.waterSurface, [0, 0.165, 0]));
+        spout.position.set(-0.14, 0.18, 0);
+      } else if (type === 'ice_mug') {
+        // Caneca esculpida em bloco de gelo sólido (opaco acetinado)
+        const iceMat = clayMat(0xbae6fd, 0.22, 0.12);
+        cup.add(makeMesh(new THREE.BoxGeometry(0.30, 0.34, 0.30), iceMat, [0, 0, 0]));
+        cup.add(makeMesh(new THREE.BoxGeometry(0.12, 0.18, 0.06), iceMat, [0.19, 0, 0]));
+        cup.add(makeMesh(new THREE.BoxGeometry(0.25, 0.035, 0.25), M.waterSurface, [0, 0.165, 0]));
+        spout.position.set(-0.12, 0.18, 0);
+      } else if (type === 'cosmic_cup') {
+        // Copo cósmico roxo-neon sólido com canudo espiralado
+        const cupMat = clayMat(0x4c1d95, 0.28, 0.35, 0x3b0764, 0.35);
+        const ringMat = clayMat(0x22d3ee, 0.22, 0.4, 0x06b6d4, 0.5);
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.14, 0.09, 0.26, 18), cupMat, [0, 0, 0]));
+        cup.add(makeMesh(new THREE.TorusGeometry(0.13, 0.018, 10, 22), ringMat, [0, 0.06, 0], [1, 1, 1], [Math.PI / 2, 0, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.12, 0.12, 0.03, 18), M.waterSurface, [0, 0.125, 0]));
+        // Canudo espiralado
+        const pts = [];
+        for (let i = 0; i <= 18; i++) {
+          const t = i / 18;
+          const ang = t * Math.PI * 3.5;
+          pts.push(new THREE.Vector3(Math.cos(ang) * 0.035 * (1 - t * 0.4), 0.11 + t * 0.28, Math.sin(ang) * 0.035 * (1 - t * 0.4)));
+        }
+        pts.push(new THREE.Vector3(-0.10, 0.43, 0));
+        const spiralGeo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 28, 0.015, 8, false);
+        cup.add(makeMesh(spiralGeo, clayMat(0x38bdf8, 0.25, 0.1, 0x0284c7, 0.3)));
+        spout.position.set(-0.10, 0.43, 0);
+      } else if (type === 'stone_mug') {
+        // Caneca pesada de pedra
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.18, 0.17, 0.34, 8), M.stone, [0, 0, 0]));
+        cup.add(makeMesh(new THREE.BoxGeometry(0.11, 0.19, 0.07), M.stone, [0.19, 0, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.15, 0.15, 0.03, 8), M.waterSurface, [0, 0.165, 0]));
+        spout.position.set(-0.14, 0.18, 0);
+      } else if (type === 'gourd') {
+        // Cabaça / cuia artesanal do Saci
+        const gourdMat = clayMat(0xb45309, 0.56);
+        cup.add(makeMesh(new THREE.SphereGeometry(0.15, 18, 16), gourdMat, [0, -0.05, 0], [1, 0.92, 1]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.08, 0.12, 0.14, 16), gourdMat, [0, 0.09, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.072, 0.072, 0.025, 16), M.waterSurface, [0, 0.158, 0]));
+        spout.position.set(-0.07, 0.165, 0);
+      } else if (type === 'well_bucket') {
+        // Mini balde de poço de madeira com alça de ferro
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.15, 0.11, 0.24, 14), M.wood, [0, 0, 0]));
+        cup.add(makeMesh(new THREE.TorusGeometry(0.135, 0.014, 8, 18), M.silver, [0, 0.06, 0], [1, 1, 1], [Math.PI / 2, 0, 0]));
+        cup.add(makeMesh(new THREE.TorusGeometry(0.145, 0.012, 8, 18, Math.PI), M.silver, [0, 0.11, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.13, 0.13, 0.025, 14), M.waterSurface, [0, 0.115, 0]));
+        spout.position.set(-0.11, 0.13, 0);
+      } else if (type === 'beaker') {
+        // Frasco Erlenmeyer sólido estilizado (cerâmica/porcelana branca com aro dourado e gargalo azul)
+        const labMat = clayMat(0xe2e8f0, 0.25, 0.08);
+        cup.add(makeMesh(new THREE.ConeGeometry(0.16, 0.24, 20), labMat, [0, -0.02, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.055, 0.062, 0.16, 16), labMat, [0, 0.15, 0]));
+        cup.add(makeMesh(new THREE.TorusGeometry(0.06, 0.012, 8, 18), M.gold, [0, 0.22, 0], [1, 1, 1], [Math.PI / 2, 0, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.125, 0.152, 0.09, 20), M.waterSurface, [0, -0.08, 0]));
+        spout.position.set(-0.04, 0.24, 0);
+      } else if (type === 'pitcher') {
+        // Jarra mágica de cerâmica azul-ouro (para Mula Sem Cabeça e Mímico)
+        const ceramic = clayMat(0xfef3c7, 0.30, 0.06);
+        cup.add(makeMesh(new THREE.SphereGeometry(0.18, 20, 16), ceramic, [0, -0.03, 0], [0.95, 1.05, 0.95]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.11, 0.09, 0.16, 18), ceramic, [0, 0.15, 0]));
+        cup.add(makeMesh(new THREE.TorusGeometry(0.105, 0.016, 10, 20), M.gold, [0, 0.22, 0], [1, 1, 1], [Math.PI / 2, 0, 0]));
+        cup.add(makeMesh(new THREE.TorusGeometry(0.11, 0.022, 10, 18, Math.PI), M.gold, [0.16, 0.03, 0], [1, 1, 1], [0, 0, -Math.PI / 2]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.095, 0.095, 0.025, 16), M.waterSurface, [0, 0.22, 0]));
+        spout.position.set(-0.10, 0.23, 0);
+      } else if (type === 'mini_cup') {
+        // Copinho pequeno para os múltiplos tentáculos do Kraken
+        const cupMat = clayMat(0xfde68a, 0.35);
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.095, 0.075, 0.16, 14), cupMat, [0, 0, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.082, 0.082, 0.02, 14), M.waterSurface, [0, 0.078, 0]));
+        spout.position.set(-0.06, 0.09, 0);
+      } else if (type === 'royal_chalice') {
+        // Cálice real cravejado (Gênio e Dragão)
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.17, 0.06, 0.22, 20), M.goldBright, [0, 0.10, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.036, 0.04, 0.16, 14), M.gold, [0, -0.06, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.10, 0.12, 0.045, 18), M.goldBright, [0, -0.15, 0]));
+        // Gemas vermelhas/azuis sólidas
+        const gemMat = clayMat(0xe11d48, 0.16, 0.2, 0x9f1239, 0.3);
+        for (let i = 0; i < 4; i++) {
+          const a = (i / 4) * Math.PI * 2;
+          cup.add(makeMesh(new THREE.OctahedronGeometry(0.028), gemMat, [Math.cos(a) * 0.145, 0.11, Math.sin(a) * 0.145]));
+        }
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.15, 0.15, 0.03, 20), M.waterSurface, [0, 0.20, 0]));
+        spout.position.set(-0.12, 0.21, 0);
+      } else {
+        // Tigela / bacia elevada (Nessie)
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.32, 0.20, 0.22, 22), M.stone, [0, 0.24, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.12, 0.18, 0.22, 18), M.stone, [0, 0.06, 0]));
+        cup.add(makeMesh(new THREE.TorusGeometry(0.31, 0.024, 10, 24), M.gold, [0, 0.34, 0], [1, 1, 1], [Math.PI / 2, 0, 0]));
+        cup.add(makeMesh(new THREE.CylinderGeometry(0.28, 0.28, 0.03, 22), M.waterSurface, [0, 0.335, 0]));
+        spout.position.set(0, 0.36, 0);
+      }
+
+      return { cup, spout };
+    }
+
+    // =========================================================================
+    // 6. FÁBRICA DOS 16 PERSONAGENS 3D SÓLIDOS (CADA UM ÚNICO E OPACO)
+    // =========================================================================
+    function buildCharacter(id) {
+      const root = new THREE.Group();
+      root.name = `GotaViva_${id}`;
+
+      const bodyGroup = new THREE.Group();
+      const headGroup = new THREE.Group();
+      const armGroup = new THREE.Group();
+      const mouthMarker = new THREE.Object3D();
+
+      root.add(bodyGroup);
+
+      let spoutMarker = new THREE.Object3D();
+      let cupGroup = new THREE.Group();
+      const special = {};
+
+      // -----------------------------------------------------------------------
+      // 01. GNOMO RABUGENTO
+      // -----------------------------------------------------------------------
+      if (id === 'gnomo') {
+        const tunic = clayMat(0x1e3a8a, 0.56);
+        const hatRed = clayMat(0xdc2626, 0.48);
+        const skin = clayMat(0xf5c2a3, 0.48);
+        const nosePink = clayMat(0xf08c84, 0.42);
+        const beardWhite = clayMat(0xf8fafc, 0.62);
+        const bootMat = clayMat(0x3f2414, 0.65);
+
+        // Botinhas
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.17, 18, 14), bootMat, [-0.24, 0.13, 0.08], [1.0, 0.72, 1.35]));
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.17, 18, 14), bootMat, [0.24, 0.13, 0.08], [1.0, 0.72, 1.35]));
+
+        // Corpo / Túnica azul-marinho gordinha + cinto com fivela dourada
+        bodyGroup.add(makeMesh(new THREE.CylinderGeometry(0.42, 0.54, 0.78, 24), tunic, [0, 0.56, 0]));
+        bodyGroup.add(makeMesh(new THREE.CylinderGeometry(0.50, 0.52, 0.11, 24), M.woodDark, [0, 0.44, 0]));
+        bodyGroup.add(makeMesh(new THREE.BoxGeometry(0.18, 0.14, 0.07), M.goldBright, [0, 0.44, 0.50]));
+
+        // Braço esquerdo apoiado na cintura
+        bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.11, 0.28, 8, 14), tunic, [-0.52, 0.66, 0.04], [1, 1, 1], [0.2, 0, 0.45]));
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.11, 14, 12), skin, [-0.58, 0.48, 0.14]));
+
+        // Cabeça + Barba esculpida em camadas + Chapéu pontudo gigante
+        headGroup.position.set(0, 1.04, 0);
+        bodyGroup.add(headGroup);
+
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.38, 24, 20), skin, [0, 0.08, 0]));
+
+        // Barbona branca em camadas
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.44, 0.72, 20), beardWhite, [0, -0.34, 0.18], [1.05, 1, 0.78], [Math.PI, 0, 0]));
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.24, 16, 14), beardWhite, [-0.21, -0.14, 0.24]));
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.24, 16, 14), beardWhite, [0.21, -0.14, 0.24]));
+        // Bigodão
+        headGroup.add(makeMesh(new THREE.CapsuleGeometry(0.085, 0.20, 8, 12), beardWhite, [-0.14, -0.05, 0.36], [1, 1, 0.8], [0, 0, 1.25]));
+        headGroup.add(makeMesh(new THREE.CapsuleGeometry(0.085, 0.20, 8, 12), beardWhite, [0.14, -0.05, 0.36], [1, 1, 0.8], [0, 0, -1.25]));
+
+        // Narizão rosado grande
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.145, 20, 16), nosePink, [0, 0.07, 0.38], [1.1, 0.92, 0.95]));
+
+        // Olhos + Sobrancelhas grossas franzidas (bem rabugento!)
+        const eL = makeEye(0.068, true); eL.position.set(-0.15, 0.15, 0.32); headGroup.add(eL);
+        const eR = makeEye(0.068, true); eR.position.set(0.15, 0.15, 0.32); headGroup.add(eR);
+        headGroup.add(makeMesh(new THREE.CapsuleGeometry(0.042, 0.15, 6, 10), beardWhite, [-0.15, 0.24, 0.35], [1, 1, 0.75], [0, 0, 1.22]));
+        headGroup.add(makeMesh(new THREE.CapsuleGeometry(0.042, 0.15, 6, 10), beardWhite, [0.15, 0.24, 0.35], [1, 1, 0.75], [0, 0, -1.22]));
+
+        // Chapéu vermelho pontudo gigante com aba e fivela dourada
+        headGroup.add(makeMesh(new THREE.TorusGeometry(0.41, 0.085, 12, 26), hatRed, [0, 0.30, -0.02], [1, 1, 0.7], [Math.PI / 2 - 0.12, 0, 0]));
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.42, 1.02, 24), hatRed, [0, 0.78, -0.08], [1, 1, 1], [-0.14, 0, 0.06]));
+        headGroup.add(makeMesh(new THREE.TorusGeometry(0.37, 0.036, 10, 24), M.woodDark, [0, 0.39, -0.02], [1, 1, 1], [Math.PI / 2 - 0.12, 0, 0]));
+        headGroup.add(makeMesh(new THREE.BoxGeometry(0.14, 0.12, 0.06), M.goldBright, [0, 0.41, 0.35]));
+
+        // Boca escondida sob bigode
+        mouthMarker.position.set(0, -0.09, 0.38);
+        headGroup.add(mouthMarker);
+
+        // Braço direito + Caneca de madeira com aros dourados
+        armGroup.position.set(0.46, 0.80, 0.08);
+        bodyGroup.add(armGroup);
+        armGroup.add(makeMesh(new THREE.CapsuleGeometry(0.105, 0.28, 8, 14), tunic, [0.10, -0.14, 0.14], [1, 1, 1], [0.65, 0, -0.25]));
+        armGroup.add(makeMesh(new THREE.SphereGeometry(0.105, 14, 12), skin, [0.16, -0.24, 0.28]));
+
+        const v = createVessel('wood_mug');
+        cupGroup = v.cup; spoutMarker = v.spout;
+        cupGroup.position.set(0.16, -0.14, 0.44);
+        armGroup.add(cupGroup);
+      }
+
+      // -----------------------------------------------------------------------
+      // 02. SAPO MAGO
+      // -----------------------------------------------------------------------
+      else if (id === 'sapo') {
+        const green = clayMat(0x10b981, 0.46);
+        const belly = clayMat(0xa7f3d0, 0.55);
+        const wizBlue = clayMat(0x1e3a8a, 0.50);
+        const capePurple = clayMat(0x6d28d9, 0.55);
+
+        // Patas traseiras gordinhas
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.24, 18, 14), green, [-0.46, 0.16, -0.02], [1.1, 0.65, 1.35]));
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.24, 18, 14), green, [0.46, 0.16, -0.02], [1.1, 0.65, 1.35]));
+
+        // Corpo gordinho verde-esmeralda + barriga clara
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.62, 26, 22), green, [0, 0.56, 0], [1.08, 0.90, 0.98]));
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.46, 22, 18), belly, [0, 0.52, 0.26], [1.0, 0.88, 0.72]));
+
+        // Capinha roxa de mago nas costas + fecho dourado
+        bodyGroup.add(makeMesh(new THREE.CylinderGeometry(0.42, 0.66, 0.66, 20, 1, false, Math.PI * 0.25, Math.PI * 1.5), capePurple, [0, 0.58, -0.08]));
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.08, 14, 12), M.goldBright, [0, 0.90, 0.44]));
+
+        // Papo / Garganta que infla ao beber!
+        const throat = makeMesh(new THREE.SphereGeometry(0.26, 20, 16), belly, [0, 0.84, 0.45], [1.15, 0.75, 0.85]);
+        bodyGroup.add(throat);
+        special.frogThroat = throat;
+
+        // Cabeça de sapo
+        headGroup.position.set(0, 0.98, 0.04);
+        bodyGroup.add(headGroup);
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.50, 24, 20), green, [0, 0.08, 0.04], [1.18, 0.72, 1.0]));
+
+        // Olhões saltados no topo da cabeça
+        [-0.28, 0.28].forEach((x) => {
+          headGroup.add(makeMesh(new THREE.SphereGeometry(0.20, 18, 16), green, [x, 0.36, 0.14]));
+          const eye = makeEye(0.14, true, 0x0f172a);
+          eye.position.set(x, 0.37, 0.25);
+          headGroup.add(eye);
+        });
+        // Bochechas e sorriso largo
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.08, 12, 10), M.blush, [-0.38, 0.04, 0.36], [1.2, 0.7, 0.5]));
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.08, 12, 10), M.blush, [0.38, 0.04, 0.36], [1.2, 0.7, 0.5]));
+        headGroup.add(makeMesh(new THREE.TorusGeometry(0.22, 0.022, 8, 20, Math.PI), clayMat(0x064e3b, 0.5), [0, 0.04, 0.48], [1, 0.5, 1], [0, 0, Math.PI]));
+
+        // Chapéu de bruxo torto com estrelinhas douradas
+        const hat = new THREE.Group();
+        hat.position.set(0.04, 0.44, -0.02);
+        hat.rotation.z = -0.18;
+        hat.add(makeMesh(new THREE.CylinderGeometry(0.56, 0.58, 0.06, 24), wizBlue, [0, 0, 0]));
+        hat.add(makeMesh(new THREE.ConeGeometry(0.36, 0.72, 22), wizBlue, [0, 0.36, -0.02], [1, 1, 1], [-0.15, 0, -0.1]));
+        hat.add(makeMesh(new THREE.OctahedronGeometry(0.055), M.goldBright, [0.14, 0.30, 0.22]));
+        hat.add(makeMesh(new THREE.OctahedronGeometry(0.045), M.goldBright, [-0.15, 0.46, 0.14]));
+        hat.add(makeMesh(new THREE.OctahedronGeometry(0.04), M.goldBright, [0.02, 0.16, 0.32]));
+        headGroup.add(hat);
+
+        mouthMarker.position.set(0, -0.02, 0.52);
+        headGroup.add(mouthMarker);
+
+        // Braço esquerdo + Braço direito com cálice mágico
+        bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.10, 0.25, 8, 12), green, [-0.54, 0.60, 0.18], [1, 1, 1], [0.4, 0, 0.5]));
+
+        armGroup.position.set(0.50, 0.72, 0.14);
+        bodyGroup.add(armGroup);
+        armGroup.add(makeMesh(new THREE.CapsuleGeometry(0.10, 0.25, 8, 12), green, [0.08, -0.12, 0.18], [1, 1, 1], [0.7, 0, -0.2]));
+
+        const v = createVessel('chalice');
+        cupGroup = v.cup; spoutMarker = v.spout;
+        cupGroup.position.set(0.12, -0.06, 0.38);
+        armGroup.add(cupGroup);
+      }
+
+      // -----------------------------------------------------------------------
+      // 03. COGUMELO VIVO
+      // -----------------------------------------------------------------------
+      else if (id === 'cogumelo') {
+        const stem = clayMat(0xfef3c7, 0.55);
+        const capRed = clayMat(0xe11d48, 0.34);
+        const spotWhite = clayMat(0xffffff, 0.42);
+        const underCap = clayMat(0xfde68a, 0.65);
+
+        // Pezinhos fofos
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.16, 16, 12), stem, [-0.20, 0.11, 0.06], [1, 0.7, 1.2]));
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.16, 16, 12), stem, [0.20, 0.11, 0.06], [1, 0.7, 1.2]));
+
+        // Caule gordinho creme sólido
+        bodyGroup.add(makeMesh(new THREE.CylinderGeometry(0.36, 0.48, 0.88, 24), stem, [0, 0.56, 0]));
+
+        // Cabeça / Chapéu de cogumelo gigante
+        headGroup.position.set(0, 0.96, 0);
+        bodyGroup.add(headGroup);
+
+        // Parte de baixo (lamelas)
+        headGroup.add(makeMesh(new THREE.CylinderGeometry(0.76, 0.38, 0.14, 28), underCap, [0, 0.16, 0]));
+        // Domo vermelho brilhante
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.80, 28, 22, 0, Math.PI * 2, 0, Math.PI * 0.55), capRed, [0, 0.14, 0], [1.04, 0.86, 1.04]));
+
+        // Bolinhas brancas 3D em relevo no chapéu
+        const spots = [
+          [0, 0.78, 0.16, 0.14],
+          [-0.45, 0.56, 0.46, 0.13],
+          [0.48, 0.52, 0.42, 0.12],
+          [-0.58, 0.36, -0.34, 0.13],
+          [0.54, 0.42, -0.38, 0.14],
+          [0.05, 0.58, -0.58, 0.13],
+          [-0.12, 0.36, 0.70, 0.10],
+        ];
+        spots.forEach(([x, y, z, r]) => {
+          headGroup.add(makeMesh(new THREE.SphereGeometry(r, 16, 12), spotWhite, [x, y, z], [1, 0.72, 1]));
+        });
+
+        // Olhos sonolentos com pálpebras semicerradas (no caule)
+        [-0.16, 0.16].forEach((x) => {
+          const eye = makeEye(0.072, false);
+          eye.position.set(x, -0.14, 0.38);
+          headGroup.add(eye);
+          // Pálpebra pesada de sono
+          headGroup.add(makeMesh(new THREE.SphereGeometry(0.082, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.52), stem, [x, -0.12, 0.39], [1.1, 0.9, 1.0], [0.2, 0, 0]));
+        });
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.065, 12, 10), M.blush, [-0.26, -0.22, 0.36], [1.2, 0.7, 0.5]));
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.065, 12, 10), M.blush, [0.26, -0.22, 0.36], [1.2, 0.7, 0.5]));
+        // Boquinha pequena em "o" sonolento
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.045, 12, 10), clayMat(0x7c2d12, 0.5), [0, -0.24, 0.40], [1, 1.2, 0.6]));
+
+        mouthMarker.position.set(0, -0.24, 0.44);
+        headGroup.add(mouthMarker);
+
+        // Bracinho esquerdo curto
+        bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.085, 0.18, 8, 12), stem, [-0.46, 0.60, 0.10], [1, 1, 1], [0.2, 0, 0.6]));
+
+        // Braço direito + Copinho de folha com canudinho
+        armGroup.position.set(0.42, 0.64, 0.14);
+        bodyGroup.add(armGroup);
+        armGroup.add(makeMesh(new THREE.CapsuleGeometry(0.085, 0.18, 8, 12), stem, [0.06, -0.08, 0.14], [1, 1, 1], [0.6, 0, -0.3]));
+
+        const v = createVessel('leaf_straw');
+        cupGroup = v.cup; spoutMarker = v.spout;
+        cupGroup.position.set(0.06, -0.05, 0.30);
+        armGroup.add(cupGroup);
+        special.isStraw = true;
+      }
+
+      // -----------------------------------------------------------------------
+      // 04. GOBLIN DO CAFÉ
+      // -----------------------------------------------------------------------
+      else if (id === 'goblin') {
+        const skin = clayMat(0x65a30d, 0.50);
+        const bags = clayMat(0x6b21a8, 0.58);
+        const vest = clayMat(0x78350f, 0.64);
+        const pants = clayMat(0x292524, 0.68);
+
+        // Perninhas + corpo com colete marrom
+        bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.10, 0.22, 8, 12), pants, [-0.18, 0.18, 0]));
+        bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.10, 0.22, 8, 12), pants, [0.18, 0.18, 0]));
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.40, 22, 18), vest, [0, 0.58, 0], [0.95, 1.05, 0.85]));
+        // Botões dourados do colete
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.04, 10, 10), M.gold, [0, 0.66, 0.34]));
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.04, 10, 10), M.gold, [0, 0.50, 0.35]));
+
+        // Cabeça grande e expressiva
+        headGroup.position.set(0, 1.08, 0);
+        bodyGroup.add(headGroup);
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.40, 24, 20), skin, [0, 0.08, 0], [1.06, 0.94, 0.95]));
+
+        // Orelhas enormes pontudas nas laterais
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.15, 0.64, 14), skin, [-0.56, 0.14, -0.02], [1, 1, 0.5], [0, 0, 1.32]));
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.15, 0.64, 14), skin, [0.56, 0.14, -0.02], [1, 1, 0.5], [0, 0, -1.32]));
+
+        // Olhos arregalados + olheiras roxas bem marcadas
+        [-0.16, 0.16].forEach((x) => {
+          headGroup.add(makeMesh(new THREE.TorusGeometry(0.11, 0.036, 10, 18), bags, [x, 0.10, 0.31], [1.1, 0.95, 0.7]));
+          const eye = makeEye(0.105, true);
+          eye.position.set(x, 0.13, 0.33);
+          headGroup.add(eye);
+        });
+        // Nariz pontudo + sorriso malandro com dentinhos
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.065, 0.18, 12), skin, [0, 0.05, 0.44], [1, 1, 1], [1.25, 0, 0]));
+        headGroup.add(makeMesh(new THREE.TorusGeometry(0.15, 0.022, 8, 18, Math.PI), clayMat(0x1c1917, 0.5), [0, -0.05, 0.36], [1, 0.65, 1], [0, 0, Math.PI]));
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.028, 0.07, 8), M.eyeWhite, [-0.08, -0.10, 0.38], [1, 1, 1], [Math.PI, 0, 0]));
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.028, 0.07, 8), M.eyeWhite, [0.08, -0.10, 0.38], [1, 1, 1], [Math.PI, 0, 0]));
+
+        mouthMarker.position.set(0, -0.08, 0.42);
+        headGroup.add(mouthMarker);
+
+        // Braço esquerdo + Braço direito com canecão gigante
+        bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.08, 0.28, 8, 12), skin, [-0.46, 0.64, 0.08], [1, 1, 1], [0.2, 0, 0.45]));
+
+        armGroup.position.set(0.42, 0.72, 0.10);
+        bodyGroup.add(armGroup);
+        armGroup.add(makeMesh(new THREE.CapsuleGeometry(0.08, 0.28, 8, 12), skin, [0.10, -0.12, 0.18], [1, 1, 1], [0.65, 0, -0.25]));
+
+        const v = createVessel('giant_mug');
+        cupGroup = v.cup; spoutMarker = v.spout;
+        cupGroup.position.set(0.14, -0.08, 0.42);
+        armGroup.add(cupGroup);
+        special.isJittery = true;
+      }
+
+      // -----------------------------------------------------------------------
+      // 05. NESSIE (LAGO NESS)
+      // -----------------------------------------------------------------------
+      else if (id === 'nessie') {
+        const teal = clayMat(0x0d9488, 0.42);
+        const belly = clayMat(0x99f6e4, 0.50);
+        const ridge = clayMat(0x115e59, 0.46);
+
+        // Corpo aquático roliço + 4 nadadeiras
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.56, 26, 20), teal, [0, 0.46, -0.12], [0.95, 0.76, 1.32]));
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.42, 20, 16), belly, [0, 0.38, -0.08], [0.92, 0.64, 1.20]));
+        // Rabo afilado atrás
+        bodyGroup.add(makeMesh(new THREE.ConeGeometry(0.24, 0.65, 16), teal, [0, 0.38, -0.96], [1, 1, 1], [-1.35, 0, 0]));
+
+        // 4 Nadadeiras
+        [[-0.56, 0.18, 0.18, 0.3], [0.56, 0.18, 0.18, -0.3], [-0.52, 0.16, -0.45, 0.4], [0.52, 0.16, -0.45, -0.4]].forEach(([x, y, z, rz]) => {
+          bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.24, 16, 12), teal, [x, y, z], [1.4, 0.32, 0.82], [0, 0, rz]));
+        });
+
+        // Pescoço comprido curvado dentro do headGroup para inclinar até a taça!
+        headGroup.position.set(0, 0.68, 0.34);
+        bodyGroup.add(headGroup);
+
+        const neckPts = [
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(0, 0.38, 0.14),
+          new THREE.Vector3(0, 0.80, 0.04),
+          new THREE.Vector3(0, 1.15, 0.14),
+        ];
+        const neckCurve = new THREE.CatmullRomCurve3(neckPts);
+        headGroup.add(makeMesh(new THREE.TubeGeometry(neckCurve, 24, 0.145, 16, false), teal));
+
+        // Cristas dorsais ao longo do pescoço
+        [0.2, 0.45, 0.7].forEach((t) => {
+          const p = neckCurve.getPoint(t);
+          headGroup.add(makeMesh(new THREE.ConeGeometry(0.06, 0.15, 10), ridge, [0, p.y, p.z - 0.15], [1, 1, 1], [-1.3, 0, 0]));
+        });
+
+        // Bolinha de gole que percorre o pescoço para baixo durante a animação!
+        const gulpBulge = makeMesh(new THREE.SphereGeometry(0.21, 18, 16), clayMat(0x2dd4bf, 0.38), [0, 0.9, 0.1]);
+        gulpBulge.visible = false;
+        headGroup.add(gulpBulge);
+        special.nessieCurve = neckCurve;
+        special.nessieGulp = gulpBulge;
+
+        // Cabecinha simpática no topo do pescoço
+        const snoutGroup = new THREE.Group();
+        snoutGroup.position.set(0, 1.18, 0.18);
+        headGroup.add(snoutGroup);
+        snoutGroup.add(makeMesh(new THREE.SphereGeometry(0.22, 20, 16), teal, [0, 0, 0], [1.0, 0.92, 1.25]));
+        snoutGroup.add(makeMesh(new THREE.SphereGeometry(0.15, 16, 14), teal, [0, -0.04, 0.20], [1.1, 0.78, 1.0]));
+        const eL = makeEye(0.055, true); eL.position.set(-0.14, 0.06, 0.14); snoutGroup.add(eL);
+        const eR = makeEye(0.055, true); eR.position.set(0.14, 0.06, 0.14); snoutGroup.add(eR);
+
+        mouthMarker.position.set(0, -0.09, 0.30);
+        snoutGroup.add(mouthMarker);
+
+        // Taça/tigela elevada na frente da Nessie sobre o pedestal
+        const v = createVessel('basin');
+        cupGroup = v.cup; spoutMarker = v.spout;
+        cupGroup.position.set(0, 0.02, 0.95);
+        root.add(cupGroup);
+        special.isNessie = true;
+      }
+
+      // -----------------------------------------------------------------------
+      // 06. YETI GELADO
+      // -----------------------------------------------------------------------
+      else if (id === 'yeti') {
+        const fur = clayMat(0xf1f5f9, 0.66);
+        const iceFace = clayMat(0x7dd3fc, 0.44);
+        const hornMat = clayMat(0x94a3b8, 0.42);
+
+        // Pés grandes azul-gelo
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.22, 16, 12), iceFace, [-0.30, 0.14, 0.10], [1.1, 0.65, 1.35]));
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.22, 16, 12), iceFace, [0.30, 0.14, 0.10], [1.1, 0.65, 1.35]));
+
+        // Corpo largo parrudo com tufos de pelo esculpidos opacos
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.68, 26, 22), fur, [0, 0.74, 0], [1.14, 1.02, 0.92]));
+        // Tufos nos ombros e peito
+        [[-0.56, 1.05, 0.04], [0.56, 1.05, 0.04], [-0.42, 0.56, 0.42], [0.42, 0.56, 0.42], [0, 0.94, 0.46]].forEach(([x, y, z]) => {
+          bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.22, 14, 12), fur, [x, y, z]));
+        });
+
+        // Cabeça parruda integrada + rosto azul-gelo + chifrinhos curvados
+        headGroup.position.set(0, 1.24, 0.05);
+        bodyGroup.add(headGroup);
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.45, 22, 18), fur, [0, 0.08, -0.02], [1.08, 0.96, 0.96]));
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.32, 20, 16), iceFace, [0, 0.04, 0.24], [1.05, 0.88, 0.72]));
+
+        // Chifrinhos
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.085, 0.30, 12), hornMat, [-0.32, 0.42, 0.04], [1, 1, 1], [0.1, 0, 0.48]));
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.085, 0.30, 12), hornMat, [0.32, 0.42, 0.04], [1, 1, 1], [0.1, 0, -0.48]));
+
+        // Olhos bobões + sorriso largo com 1 dentinho
+        const eL = makeEye(0.072, true); eL.position.set(-0.14, 0.14, 0.42); headGroup.add(eL);
+        const eR = makeEye(0.072, true); eR.position.set(0.14, 0.14, 0.42); headGroup.add(eR);
+        headGroup.add(makeMesh(new THREE.TorusGeometry(0.15, 0.024, 8, 18, Math.PI), clayMat(0x0c4a6e, 0.5), [0, -0.04, 0.43], [1, 0.7, 1], [0, 0, Math.PI]));
+        headGroup.add(makeMesh(new THREE.BoxGeometry(0.06, 0.075, 0.04), M.eyeWhite, [0.05, -0.10, 0.45]));
+
+        mouthMarker.position.set(0, -0.08, 0.47);
+        headGroup.add(mouthMarker);
+
+        // Braço esquerdo parrudo
+        bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.17, 0.42, 8, 14), fur, [-0.74, 0.72, 0.06], [1, 1, 1], [0.15, 0, 0.28]));
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.16, 14, 12), iceFace, [-0.82, 0.46, 0.16]));
+
+        // Braço direito + Caneca esculpida em bloco de gelo
+        armGroup.position.set(0.68, 0.94, 0.08);
+        bodyGroup.add(armGroup);
+        armGroup.add(makeMesh(new THREE.CapsuleGeometry(0.16, 0.40, 8, 14), fur, [0.10, -0.22, 0.16], [1, 1, 1], [0.65, 0, -0.18]));
+        armGroup.add(makeMesh(new THREE.SphereGeometry(0.15, 14, 12), iceFace, [0.14, -0.34, 0.34]));
+
+        const v = createVessel('ice_mug');
+        cupGroup = v.cup; spoutMarker = v.spout;
+        cupGroup.position.set(0.14, -0.20, 0.52);
+        armGroup.add(cupGroup);
+      }
+
+      // -----------------------------------------------------------------------
+      // 07. ET DE VARGINHA
+      // -----------------------------------------------------------------------
+      else if (id === 'et') {
+        const skin = clayMat(0x8c5a3c, 0.46);
+        const ridgeMat = clayMat(0x71432a, 0.42);
+        const redEye = clayMat(0xef4444, 0.10, 0.12, 0x991b1b, 0.45);
+
+        // Corpo estreito e perninhas finas
+        bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.075, 0.36, 8, 12), skin, [-0.14, 0.24, 0]));
+        bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.075, 0.36, 8, 12), skin, [0.14, 0.24, 0]));
+        bodyGroup.add(makeMesh(new THREE.CylinderGeometry(0.18, 0.24, 0.62, 20), skin, [0, 0.68, 0]));
+
+        // Cabeção icônico com as 3 cristas características no topo
+        headGroup.position.set(0, 1.12, 0);
+        bodyGroup.add(headGroup);
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.46, 26, 22), skin, [0, 0.24, 0.02], [1.04, 1.18, 1.08]));
+
+        // 3 Cristas no topo da cabeça
+        [-0.22, 0, 0.22].forEach((x, idx) => {
+          const h = idx === 1 ? 0.24 : 0.19;
+          headGroup.add(makeMesh(new THREE.CapsuleGeometry(0.075, h, 8, 12), ridgeMat, [x, 0.68, -0.02], [0.85, 1.0, 1.6], [0.22, 0, x * -0.45]));
+        });
+
+        // Olhos amendoados grandes vermelhos brilhantes com catchlights
+        [-0.19, 0.19].forEach((x, idx) => {
+          const eyeGrp = new THREE.Group();
+          eyeGrp.position.set(x, 0.22, 0.38);
+          eyeGrp.rotation.z = idx === 0 ? -0.32 : 0.32;
+          eyeGrp.add(makeMesh(new THREE.SphereGeometry(0.13, 18, 16), redEye, [0, 0, 0], [1.28, 0.82, 0.65]));
+          eyeGrp.add(makeMesh(new THREE.SphereGeometry(0.036, 10, 10), M.eyeWhite, [-0.04, 0.04, 0.078]));
+          headGroup.add(eyeGrp);
+        });
+
+        // Boquinha discreta
+        headGroup.add(makeMesh(new THREE.CapsuleGeometry(0.018, 0.08, 6, 8), clayMat(0x3b1f12, 0.5), [0, -0.04, 0.42], [1, 1, 1], [0, 0, Math.PI / 2]));
+        mouthMarker.position.set(0, -0.04, 0.45);
+        headGroup.add(mouthMarker);
+
+        // Braço esquerdo fino
+        bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.055, 0.38, 8, 12), skin, [-0.30, 0.72, 0.08], [1, 1, 1], [0.2, 0, 0.38]));
+
+        // Braço direito + Copo cósmico com canudo espiralado
+        armGroup.position.set(0.24, 0.84, 0.08);
+        bodyGroup.add(armGroup);
+        armGroup.add(makeMesh(new THREE.CapsuleGeometry(0.055, 0.36, 8, 12), skin, [0.08, -0.14, 0.18], [1, 1, 1], [0.7, 0, -0.2]));
+
+        const v = createVessel('cosmic_cup');
+        cupGroup = v.cup; spoutMarker = v.spout;
+        cupGroup.position.set(0.08, -0.08, 0.38);
+        armGroup.add(cupGroup);
+        special.isStraw = true;
+      }
+
+      // -----------------------------------------------------------------------
+      // 08. TROLL DA PONTE
+      // -----------------------------------------------------------------------
+      else if (id === 'troll') {
+        const rock = clayMat(0x64748b, 0.76);
+        const rockLight = clayMat(0x94a3b8, 0.72);
+        const moss = clayMat(0x16a34a, 0.75);
+        const cloth = clayMat(0x78350f, 0.70);
+
+        // Pés atarracados + Barrigão musculoso
+        bodyGroup.add(makeMesh(new THREE.BoxGeometry(0.28, 0.18, 0.38), rock, [-0.28, 0.10, 0.06]));
+        bodyGroup.add(makeMesh(new THREE.BoxGeometry(0.28, 0.18, 0.38), rock, [0.28, 0.10, 0.06]));
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.64, 24, 20), rock, [0, 0.64, 0], [1.14, 0.88, 1.0]));
+        bodyGroup.add(makeMesh(new THREE.CylinderGeometry(0.58, 0.56, 0.24, 20), cloth, [0, 0.38, 0]));
+
+        // Tufos de musgo verde nos ombros
+        [[-0.50, 1.02, 0.06], [-0.36, 1.08, -0.06], [0.48, 1.02, -0.04], [0.58, 0.96, 0.08]].forEach(([x, y, z]) => {
+          bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.14, 12, 10), moss, [x, y, z], [1.2, 0.72, 1.0]));
+        });
+
+        // Cabeça larga encaixada nos ombros
+        headGroup.position.set(0, 1.08, 0.08);
+        bodyGroup.add(headGroup);
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.42, 22, 18), rock, [0, 0.08, 0], [1.16, 0.88, 0.96]));
+        // Narigão redondo
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.16, 18, 14), rockLight, [0, 0.08, 0.39], [1.15, 0.95, 0.95]));
+        // Sobrancelha grossa única (monocelha)
+        headGroup.add(makeMesh(new THREE.BoxGeometry(0.52, 0.09, 0.14), clayMat(0x334155, 0.78), [0, 0.24, 0.36]));
+
+        const eL = makeEye(0.065, true, 0xd97706); eL.position.set(-0.15, 0.15, 0.36); headGroup.add(eL);
+        const eR = makeEye(0.065, true, 0xd97706); eR.position.set(0.15, 0.15, 0.36); headGroup.add(eR);
+
+        // Duas presinhas inferiores
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.045, 0.14, 10), M.eyeWhite, [-0.14, -0.08, 0.39], [1, 1, 1], [0.15, 0, -0.15]));
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.045, 0.14, 10), M.eyeWhite, [0.14, -0.08, 0.39], [1, 1, 1], [0.15, 0, 0.15]));
+
+        mouthMarker.position.set(0, -0.09, 0.42);
+        headGroup.add(mouthMarker);
+
+        // Braço esquerdo pesado
+        bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.15, 0.36, 8, 12), rock, [-0.70, 0.62, 0.08], [1, 1, 1], [0.2, 0, 0.25]));
+
+        // Braço direito + Caneca pesada de pedra
+        armGroup.position.set(0.64, 0.80, 0.10);
+        bodyGroup.add(armGroup);
+        armGroup.add(makeMesh(new THREE.CapsuleGeometry(0.15, 0.34, 8, 12), rock, [0.10, -0.16, 0.18], [1, 1, 1], [0.65, 0, -0.2]));
+
+        const v = createVessel('stone_mug');
+        cupGroup = v.cup; spoutMarker = v.spout;
+        cupGroup.position.set(0.14, -0.14, 0.44);
+        armGroup.add(cupGroup);
+      }
+
+      // -----------------------------------------------------------------------
+      // 09. SACI
+      // -----------------------------------------------------------------------
+      else if (id === 'saci') {
+        const skin = clayMat(0x5c3317, 0.45);
+        const red = clayMat(0xdc2626, 0.44);
+        const dust = clayMat(0xd6bfa2, 0.68);
+        const dustLight = clayMat(0xf5e6d3, 0.62);
+
+        // Redemoinho de poeira sólido estilizado na base
+        const whirl = new THREE.Group();
+        whirl.position.set(0, 0.04, 0);
+        whirl.add(makeMesh(new THREE.TorusGeometry(0.18, 0.055, 10, 22), dust, [0, 0.06, 0], [1, 1, 1], [Math.PI / 2, 0, 0]));
+        whirl.add(makeMesh(new THREE.TorusGeometry(0.32, 0.06, 10, 24), dustLight, [0, 0.18, 0], [1, 1, 1], [Math.PI / 2 + 0.08, 0, 0]));
+        whirl.add(makeMesh(new THREE.TorusGeometry(0.46, 0.055, 10, 26), dust, [0, 0.32, 0], [1, 1, 1], [Math.PI / 2 - 0.08, 0, 0]));
+        root.add(whirl);
+        special.saciWhirlwind = whirl;
+
+        // Equilibrado em uma perna só!
+        bodyGroup.position.y = 0.24;
+        bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.095, 0.36, 8, 12), skin, [0, 0.28, 0]));
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.11, 14, 12), skin, [0, 0.08, 0.06], [1, 0.65, 1.35]));
+
+        // Bermuda vermelha + Tronco atlético estilizado
+        bodyGroup.add(makeMesh(new THREE.CylinderGeometry(0.26, 0.30, 0.26, 20), red, [0, 0.56, 0]));
+        bodyGroup.add(makeMesh(new THREE.CylinderGeometry(0.24, 0.26, 0.42, 20), skin, [0, 0.86, 0]));
+
+        // Cabeça + Gorro vermelho de ponta dobrada
+        headGroup.position.set(0, 1.24, 0);
+        bodyGroup.add(headGroup);
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.34, 24, 20), skin, [0, 0.06, 0]));
+
+        // Gorro icônico dobrado
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.355, 22, 16, 0, Math.PI * 2, 0, Math.PI * 0.52), red, [0, 0.09, 0]));
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.26, 0.52, 18), red, [0.06, 0.48, -0.02], [1, 1, 1], [-0.15, 0, -0.32]));
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.14, 0.36, 14), red, [0.25, 0.56, 0.05], [1, 1, 1], [0.2, 0, -1.65]));
+
+        // Sorriso travesso brilhante + olhos vivos
+        const eL = makeEye(0.068, true); eL.position.set(-0.12, 0.09, 0.30); headGroup.add(eL);
+        const eR = makeEye(0.068, true); eR.position.set(0.12, 0.09, 0.30); headGroup.add(eR);
+        headGroup.add(makeMesh(new THREE.TorusGeometry(0.11, 0.025, 8, 16, Math.PI), M.eyeWhite, [0, -0.04, 0.31], [1, 0.72, 1], [0, 0, Math.PI]));
+
+        mouthMarker.position.set(0, -0.07, 0.35);
+        headGroup.add(mouthMarker);
+
+        // Braço esquerdo aberto para equilíbrio
+        bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.075, 0.32, 8, 12), skin, [-0.36, 0.94, 0.02], [1, 1, 1], [0, 0, 0.95]));
+
+        // Braço direito + Cabaça artesanal
+        armGroup.position.set(0.28, 0.96, 0.06);
+        bodyGroup.add(armGroup);
+        armGroup.add(makeMesh(new THREE.CapsuleGeometry(0.075, 0.30, 8, 12), skin, [0.10, -0.12, 0.16], [1, 1, 1], [0.65, 0, -0.28]));
+
+        const v = createVessel('gourd');
+        cupGroup = v.cup; spoutMarker = v.spout;
+        cupGroup.position.set(0.12, -0.06, 0.34);
+        armGroup.add(cupGroup);
+      }
+
+      // -----------------------------------------------------------------------
+      // 10. FANTASMA DO POÇO (100% OPACO PORCELANA LAVANDA!)
+      // -----------------------------------------------------------------------
+      else if (id === 'fantasma') {
+        const porcelain = clayMat(0xede9fe, 0.32, 0.04); // Porcelana sólida opaca!
+        const lavenderShadow = clayMat(0xc4b5fd, 0.42, 0.04);
+
+        bodyGroup.position.y = 0.28; // Flutuando acima do pedestal
+        // Corpo + Cabeça contínua estilo escultura de vinil opaca
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.46, 28, 22), porcelain, [0, 1.02, 0]));
+        bodyGroup.add(makeMesh(new THREE.CylinderGeometry(0.46, 0.56, 0.80, 28), porcelain, [0, 0.62, 0]));
+
+        // Barra inferior ondulada esculpida em gomos sólidos
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          const r = 0.44;
+          bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.18, 14, 12), i % 2 === 0 ? porcelain : lavenderShadow, [Math.cos(a) * r, 0.20, Math.sin(a) * r], [1, 1.15, 1]));
+        }
+
+        // Rosto fofo no headGroup
+        headGroup.position.set(0, 1.02, 0);
+        bodyGroup.add(headGroup);
+
+        const eL = makeEye(0.095, false); eL.position.set(-0.17, 0.06, 0.42); headGroup.add(eL);
+        const eR = makeEye(0.095, false); eR.position.set(0.17, 0.06, 0.42); headGroup.add(eR);
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.07, 12, 10), M.blush, [-0.28, -0.05, 0.37], [1.2, 0.7, 0.5]));
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.07, 12, 10), M.blush, [0.28, -0.05, 0.37], [1.2, 0.7, 0.5]));
+        // Boquinha em "O"
+        headGroup.add(makeMesh(new THREE.TorusGeometry(0.065, 0.022, 10, 18), clayMat(0x312e81, 0.4), [0, -0.10, 0.44], [0.85, 1.15, 0.6]));
+
+        mouthMarker.position.set(0, -0.10, 0.47);
+        headGroup.add(mouthMarker);
+
+        // Bracinho esquerdo fofo
+        bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.11, 0.20, 8, 12), porcelain, [-0.52, 0.78, 0.12], [1, 1, 1], [0.3, 0, 0.6]));
+
+        // Braço direito + Mini balde de poço
+        armGroup.position.set(0.46, 0.82, 0.14);
+        bodyGroup.add(armGroup);
+        armGroup.add(makeMesh(new THREE.CapsuleGeometry(0.11, 0.20, 8, 12), porcelain, [0.08, -0.06, 0.16], [1, 1, 1], [0.7, 0, -0.35]));
+
+        const v = createVessel('well_bucket');
+        cupGroup = v.cup; spoutMarker = v.spout;
+        cupGroup.position.set(0.10, -0.06, 0.34);
+        armGroup.add(cupGroup);
+        special.isFloater = true;
+      }
+
+      // -----------------------------------------------------------------------
+      // 11. MÍMICO (BAÚ VIVO)
+      // -----------------------------------------------------------------------
+      else if (id === 'mimico') {
+        const chestWood = clayMat(0x5c3317, 0.58);
+        const insideMouth = clayMat(0x4c0519, 0.65);
+        const tonguePink = clayMat(0xf43f5e, 0.36);
+        const eyeGold = clayMat(0xfacc15, 0.15, 0.2, 0xeab308, 0.55);
+
+        // Base do Baú
+        bodyGroup.add(makeMesh(new THREE.BoxGeometry(1.16, 0.58, 0.78), chestWood, [0, 0.34, 0]));
+        bodyGroup.add(makeMesh(new THREE.BoxGeometry(1.04, 0.14, 0.68), insideMouth, [0, 0.60, 0]));
+        // Tiras de ferro dourado + fechadura
+        [-0.44, 0.44].forEach((x) => {
+          bodyGroup.add(makeMesh(new THREE.BoxGeometry(0.12, 0.61, 0.82), M.gold, [x, 0.34, 0]));
+        });
+        bodyGroup.add(makeMesh(new THREE.BoxGeometry(0.22, 0.24, 0.08), M.goldBright, [0, 0.52, 0.41]));
+        bodyGroup.add(makeMesh(new THREE.BoxGeometry(0.05, 0.10, 0.09), M.eyeDark, [0, 0.50, 0.42]));
+
+        // Dentes inferiores pontudos
+        for (let i = -3; i <= 3; i++) {
+          bodyGroup.add(makeMesh(new THREE.ConeGeometry(0.055, 0.14, 8), M.eyeWhite, [i * 0.14, 0.68, 0.32]));
+        }
+
+        // Língua rosa enrolada saindo da boca
+        const tonguePts = [
+          new THREE.Vector3(0, 0.62, 0.05),
+          new THREE.Vector3(0, 0.65, 0.42),
+          new THREE.Vector3(0.06, 0.54, 0.62),
+          new THREE.Vector3(-0.04, 0.42, 0.58),
+        ];
+        const tongue = makeMesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tonguePts), 22, 0.085, 12, false), tonguePink);
+        bodyGroup.add(tongue);
+        special.mimicTongue = tongue;
+
+        // Olhos dourados brilhantes espiando de dentro
+        [-0.22, 0.22].forEach((x) => {
+          bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.09, 16, 14), eyeGold, [x, 0.72, 0.20]));
+          bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.04, 10, 10), M.eyeDark, [x, 0.72, 0.28]));
+        });
+
+        // Tampa articulada no pivô traseiro (headGroup = tampa!)
+        headGroup.position.set(0, 0.63, -0.39);
+        bodyGroup.add(headGroup);
+
+        const lidGeo = new THREE.CylinderGeometry(0.39, 0.39, 1.16, 20, 1, false, 0, Math.PI);
+        lidGeo.rotateZ(Math.PI / 2);
+        headGroup.add(makeMesh(lidGeo, chestWood, [0, 0, 0.39]));
+        [-0.44, 0.44].forEach((x) => {
+          const strapGeo = new THREE.CylinderGeometry(0.41, 0.41, 0.12, 20, 1, false, 0, Math.PI);
+          strapGeo.rotateZ(Math.PI / 2);
+          headGroup.add(makeMesh(strapGeo, M.gold, [x, 0, 0.39]));
+        });
+        // Dentes superiores presos na tampa
+        for (let i = -3; i <= 3; i++) {
+          headGroup.add(makeMesh(new THREE.ConeGeometry(0.052, 0.14, 8), M.eyeWhite, [i * 0.14, -0.05, 0.72], [1, 1, 1], [Math.PI, 0, 0]));
+        }
+        // Abre levemente no estado idle para mostrar os olhos e dentes
+        headGroup.rotation.x = -0.38;
+
+        mouthMarker.position.set(0, 0.68, 0.18);
+        bodyGroup.add(mouthMarker);
+
+        // Copo/jarra flutuante mágica ao lado do Mímico
+        armGroup.position.set(0.82, 1.15, 0.36);
+        root.add(armGroup);
+        const v = createVessel('pitcher');
+        cupGroup = v.cup; spoutMarker = v.spout;
+        armGroup.add(cupGroup);
+        special.isMimic = true;
+      }
+
+      // -----------------------------------------------------------------------
+      // 12. CORUJA ALQUIMISTA
+      // -----------------------------------------------------------------------
+      else if (id === 'coruja') {
+        const brown = clayMat(0x78350f, 0.56);
+        const cream = clayMat(0xfef3c7, 0.58);
+        const scarf = clayMat(0x991b1b, 0.62);
+        const beak = clayMat(0xf59e0b, 0.38);
+
+        // Garrinhas
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.11, 12, 10), beak, [-0.20, 0.08, 0.14], [1.1, 0.55, 1.4]));
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.11, 12, 10), beak, [0.20, 0.08, 0.14], [1.1, 0.55, 1.4]));
+
+        // Corpo redondo de coruja + barriga creme + cachecol de boticário
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.56, 26, 22), brown, [0, 0.62, 0], [1.0, 1.08, 0.94]));
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.42, 22, 18), cream, [0, 0.56, 0.24], [0.95, 0.98, 0.65]));
+        // Cachecol vermelho + ponta caída
+        bodyGroup.add(makeMesh(new THREE.TorusGeometry(0.42, 0.095, 12, 24), scarf, [0, 0.98, 0.02], [1, 1, 0.85], [Math.PI / 2, 0, 0]));
+        bodyGroup.add(makeMesh(new THREE.BoxGeometry(0.16, 0.34, 0.06), scarf, [-0.22, 0.78, 0.44], [1, 1, 1], [0, 0, 0.12]));
+
+        // Asa esquerda dobrada
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.24, 16, 14), brown, [-0.54, 0.64, -0.02], [0.55, 1.35, 0.92], [0, 0, 0.22]));
+
+        // Cabeça + Tufos nas orelhas + Monóculo dourado julgando
+        headGroup.position.set(0, 1.24, 0.02);
+        bodyGroup.add(headGroup);
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.42, 24, 20), brown, [0, 0.08, 0], [1.08, 0.94, 0.94]));
+        // Discos faciais creme
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.22, 18, 14), cream, [-0.16, 0.08, 0.28], [1, 1, 0.55]));
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.22, 18, 14), cream, [0.16, 0.08, 0.28], [1, 1, 0.55]));
+
+        // Tufos nas orelhas
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.12, 0.32, 12), brown, [-0.34, 0.44, 0], [1, 1, 0.6], [0, 0, 0.45]));
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.12, 0.32, 12), brown, [0.34, 0.44, 0], [1, 1, 0.6], [0, 0, -0.45]));
+
+        // Olhos + Monóculo dourado no olho direito + Sobrancelha erguida julgando
+        const eL = makeEye(0.095, true, 0xd97706); eL.position.set(-0.16, 0.10, 0.35); headGroup.add(eL);
+        const eR = makeEye(0.095, true, 0xd97706); eR.position.set(0.16, 0.10, 0.35); headGroup.add(eR);
+        // Monóculo dourado (aro metálico sólido, sem vidro transparente)
+        headGroup.add(makeMesh(new THREE.TorusGeometry(0.135, 0.02, 10, 22), M.goldBright, [0.16, 0.10, 0.42]));
+        headGroup.add(makeMesh(new THREE.CylinderGeometry(0.008, 0.008, 0.26, 8), M.gold, [0.29, -0.02, 0.39], [1, 1, 1], [0, 0, -0.15]));
+        // Sobrancelha erguida (julgamento!)
+        headGroup.add(makeMesh(new THREE.CapsuleGeometry(0.028, 0.15, 6, 8), brown, [0.16, 0.26, 0.40], [1, 1, 1], [0, 0, 1.38]));
+        headGroup.add(makeMesh(new THREE.CapsuleGeometry(0.028, 0.15, 6, 8), brown, [-0.16, 0.22, 0.40], [1, 1, 1], [0, 0, 1.65]));
+
+        // Bico
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.08, 0.18, 12), beak, [0, -0.02, 0.44], [1, 1, 1], [1.65, 0, 0]));
+        mouthMarker.position.set(0, -0.05, 0.48);
+        headGroup.add(mouthMarker);
+
+        // Asa direita + Frasco Erlenmeyer
+        armGroup.position.set(0.48, 0.78, 0.12);
+        bodyGroup.add(armGroup);
+        armGroup.add(makeMesh(new THREE.SphereGeometry(0.20, 16, 14), brown, [0.10, -0.10, 0.14], [0.55, 1.15, 0.85], [0.5, 0, -0.3]));
+
+        const v = createVessel('beaker');
+        cupGroup = v.cup; spoutMarker = v.spout;
+        cupGroup.position.set(0.10, -0.04, 0.34);
+        armGroup.add(cupGroup);
+      }
+
+      // -----------------------------------------------------------------------
+      // 13. DRAGÃO BEBÊ GORDINHO
+      // -----------------------------------------------------------------------
+      else if (id === 'dragao') {
+        const emerald = clayMat(0x059669, 0.42);
+        const bellyGold = clayMat(0xfbbf24, 0.45);
+        const wingMat = clayMat(0x047857, 0.48);
+
+        // Patinhas traseiras gordinhas
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.20, 16, 14), emerald, [-0.36, 0.16, 0.14], [1, 0.75, 1.2]));
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.20, 16, 14), emerald, [0.36, 0.16, 0.14], [1, 0.75, 1.2]));
+
+        // Barrigão bem redondo verde + amarelo-ouro
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.60, 26, 22), emerald, [0, 0.58, 0], [1.04, 0.96, 1.02]));
+        bodyGroup.add(makeMesh(new THREE.SphereGeometry(0.45, 22, 18), bellyGold, [0, 0.54, 0.26], [0.96, 0.90, 0.72]));
+
+        // Rabinho com ponta dourada
+        bodyGroup.add(makeMesh(new THREE.ConeGeometry(0.18, 0.62, 14), emerald, [0, 0.34, -0.76], [1, 1, 1], [-1.25, 0, 0]));
+        bodyGroup.add(makeMesh(new THREE.OctahedronGeometry(0.12), M.goldBright, [0, 0.42, -1.06]));
+
+        // Asinhas minúsculas fofas nas costas
+        const wingL = makeMesh(new THREE.BoxGeometry(0.34, 0.24, 0.06), wingMat, [-0.46, 0.88, -0.34], [1, 1, 1], [0.2, 0.45, 0.35]);
+        const wingR = makeMesh(new THREE.BoxGeometry(0.34, 0.24, 0.06), wingMat, [0.46, 0.88, -0.34], [1, 1, 1], [0.2, -0.45, -0.35]);
+        bodyGroup.add(wingL, wingR);
+        special.dragonWings = [wingL, wingR];
+
+        // Cabeça fofa com focinho arredondado + chifrinhos dourados
+        headGroup.position.set(0, 1.14, 0.10);
+        bodyGroup.add(headGroup);
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.38, 24, 20), emerald, [0, 0.08, 0]));
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.24, 18, 16), emerald, [0, 0.01, 0.30], [1.18, 0.80, 0.92]));
+        // Chifrinhos dourados
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.068, 0.26, 12), M.goldBright, [-0.20, 0.42, -0.04], [1, 1, 1], [-0.15, 0, 0.28]));
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.068, 0.26, 12), M.goldBright, [0.20, 0.42, -0.04], [1, 1, 1], [-0.15, 0, -0.28]));
+
+        // Olhões brilhantes + narinas
+        const eL = makeEye(0.085, true); eL.position.set(-0.17, 0.16, 0.31); headGroup.add(eL);
+        const eR = makeEye(0.085, true); eR.position.set(0.17, 0.16, 0.31); headGroup.add(eR);
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.025, 8, 8), clayMat(0x064e3b), [-0.08, 0.06, 0.49]));
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.025, 8, 8), clayMat(0x064e3b), [0.08, 0.06, 0.49]));
+
+        mouthMarker.position.set(0, -0.06, 0.48);
+        headGroup.add(mouthMarker);
+
+        // Bracinho esquerdo + Braço direito com taça dourada
+        bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.095, 0.22, 8, 12), emerald, [-0.52, 0.72, 0.18], [1, 1, 1], [0.4, 0, 0.45]));
+
+        armGroup.position.set(0.48, 0.78, 0.18);
+        bodyGroup.add(armGroup);
+        armGroup.add(makeMesh(new THREE.CapsuleGeometry(0.095, 0.22, 8, 12), emerald, [0.08, -0.10, 0.18], [1, 1, 1], [0.7, 0, -0.25]));
+
+        const v = createVessel('royal_chalice');
+        cupGroup = v.cup; spoutMarker = v.spout;
+        cupGroup.position.set(0.10, -0.06, 0.38);
+        armGroup.add(cupGroup);
+        special.isDragon = true;
+      }
+
+      // -----------------------------------------------------------------------
+      // 14. GÊNIO DA LÂMPADA
+      // -----------------------------------------------------------------------
+      else if (id === 'genio') {
+        const blue = clayMat(0x2563eb, 0.38);
+        const blueTail = clayMat(0x3b82f6, 0.36);
+        const turban = clayMat(0xf8fafc, 0.44);
+        const beard = clayMat(0x0f172a, 0.48);
+        const gemRed = clayMat(0xe11d48, 0.16, 0.2, 0x9f1239, 0.4);
+
+        // Lâmpada mágica dourada na base
+        const lamp = new THREE.Group();
+        lamp.position.set(0, 0.14, 0);
+        lamp.add(makeMesh(new THREE.SphereGeometry(0.30, 22, 16), M.goldBright, [0, 0.05, 0], [1.45, 0.65, 0.92]));
+        lamp.add(makeMesh(new THREE.CylinderGeometry(0.18, 0.22, 0.08, 18), M.gold, [0, -0.10, 0]));
+        lamp.add(makeMesh(new THREE.ConeGeometry(0.10, 0.36, 14), M.goldBright, [0.44, 0.14, 0], [1, 1, 1], [0, 0, -1.15]));
+        lamp.add(makeMesh(new THREE.TorusGeometry(0.13, 0.028, 10, 18), M.gold, [-0.42, 0.12, 0]));
+        root.add(lamp);
+
+        // Cauda sólida azul emergindo da lâmpada + Busto forte e carismático
+        bodyGroup.add(makeMesh(new THREE.ConeGeometry(0.32, 0.58, 22), blueTail, [0, 0.46, 0], [1, 1, 1], [Math.PI, 0, 0]));
+        bodyGroup.add(makeMesh(new THREE.CylinderGeometry(0.46, 0.28, 0.56, 22), blue, [0, 0.96, 0]));
+        // Faixa vermelha na cintura
+        bodyGroup.add(makeMesh(new THREE.TorusGeometry(0.30, 0.075, 12, 22), clayMat(0xdc2626, 0.5), [0, 0.70, 0], [1, 1, 1], [Math.PI / 2, 0, 0]));
+
+        // Cabeça + Turbante branco com gema + Barbinha enrolada
+        headGroup.position.set(0, 1.44, 0);
+        bodyGroup.add(headGroup);
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.34, 24, 20), blue, [0, 0.06, 0]));
+        // Turbante
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.38, 22, 18), turban, [0, 0.30, -0.02], [1.08, 0.76, 1.04]));
+        headGroup.add(makeMesh(new THREE.OctahedronGeometry(0.09), gemRed, [0, 0.32, 0.36]));
+        headGroup.add(makeMesh(new THREE.TorusGeometry(0.095, 0.02, 8, 16), M.goldBright, [0, 0.32, 0.35]));
+        // Barbinha enrolada
+        headGroup.add(makeMesh(new THREE.ConeGeometry(0.11, 0.26, 12), beard, [0, -0.26, 0.22], [1, 1, 1], [Math.PI + 0.2, 0, 0]));
+        // Olhos e sorrisão
+        const eL = makeEye(0.068, true); eL.position.set(-0.13, 0.10, 0.29); headGroup.add(eL);
+        const eR = makeEye(0.068, true); eR.position.set(0.13, 0.10, 0.29); headGroup.add(eR);
+        headGroup.add(makeMesh(new THREE.TorusGeometry(0.12, 0.026, 8, 16, Math.PI), M.eyeWhite, [0, -0.03, 0.31], [1, 0.7, 1], [0, 0, Math.PI]));
+
+        mouthMarker.position.set(0, -0.06, 0.35);
+        headGroup.add(mouthMarker);
+
+        // Braço esquerdo forte + bracelete dourado
+        bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.13, 0.34, 8, 14), blue, [-0.56, 1.04, 0.06], [1, 1, 1], [0.2, 0, 0.35]));
+        bodyGroup.add(makeMesh(new THREE.TorusGeometry(0.135, 0.035, 10, 18), M.goldBright, [-0.62, 0.88, 0.10], [1, 1, 1], [Math.PI / 2, 0.3, 0]));
+
+        // Braço direito + bracelete dourado + Cálice real cravejado
+        armGroup.position.set(0.50, 1.10, 0.08);
+        bodyGroup.add(armGroup);
+        armGroup.add(makeMesh(new THREE.CapsuleGeometry(0.13, 0.32, 8, 14), blue, [0.10, -0.14, 0.16], [1, 1, 1], [0.65, 0, -0.22]));
+        armGroup.add(makeMesh(new THREE.TorusGeometry(0.135, 0.035, 10, 18), M.goldBright, [0.14, -0.22, 0.28], [1, 1, 1], [0.7, 0, 0]));
+
+        const v = createVessel('royal_chalice');
+        cupGroup = v.cup; spoutMarker = v.spout;
+        cupGroup.position.set(0.14, -0.10, 0.44);
+        armGroup.add(cupGroup);
+        special.isFloater = true;
+      }
+
+      // -----------------------------------------------------------------------
+      // 15. KRAKEN ABISSAL
+      // -----------------------------------------------------------------------
+      else if (id === 'kraken') {
+        const crimson = clayMat(0x9f1239, 0.40);
+        const deepPurple = clayMat(0x581c87, 0.46);
+        const eyeYellow = clayMat(0xfacc15, 0.16, 0.1, 0xca8a04, 0.35);
+
+        // Cabeça bulbosa principal + coroa de cristas douradas
+        headGroup.position.set(0, 0.92, 0);
+        bodyGroup.add(headGroup);
+
+        headGroup.add(makeMesh(new THREE.SphereGeometry(0.56, 26, 22), crimson, [0, 0.18, 0], [0.96, 1.15, 0.96]));
+        // Coroa de cristas douradas no topo
+        for (let i = 0; i < 5; i++) {
+          const a = (i / 5) * Math.PI * 2;
+          headGroup.add(makeMesh(new THREE.ConeGeometry(0.085, 0.28, 10), M.goldBright, [Math.cos(a) * 0.26, 0.78, Math.sin(a) * 0.26], [1, 1, 1], [Math.sin(a) * 0.3, 0, -Math.cos(a) * 0.3]));
+        }
+        // Olhos amarelos expressivos + sobrancelhas intensas
+        [-0.22, 0.22].forEach((x) => {
+          const eye = makeEye(0.11, true, 0xfacc15);
+          eye.position.set(x, 0.08, 0.48);
+          headGroup.add(eye);
+          headGroup.add(makeMesh(new THREE.SphereGeometry(0.045, 10, 10), M.eyeDark, [x, 0.08, 0.585]));
+          headGroup.add(makeMesh(new THREE.CapsuleGeometry(0.036, 0.16, 6, 8), deepPurple, [x, 0.22, 0.48], [1, 1, 1], [0, 0, x < 0 ? 1.25 : -1.25]));
+        });
+
+        mouthMarker.position.set(0, -0.18, 0.48);
+        headGroup.add(mouthMarker);
+
+        // 8 Tentáculos grossos enrolados em volta da base (3 seguram copinhos!)
+        special.krakenArms = [];
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2 + 0.35;
+          const isDrinkingArm = (i === 0 || i === 1 || i === 7);
+
+          const tentPivot = new THREE.Group();
+          tentPivot.position.set(Math.cos(angle) * 0.34, 0.46, Math.sin(angle) * 0.34);
+          tentPivot.rotation.y = -angle + Math.PI / 2;
+          bodyGroup.add(tentPivot);
+
+          const pts = isDrinkingArm
+            ? [
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, -0.18, 0.32),
+                new THREE.Vector3(0, 0.05, 0.56),
+                new THREE.Vector3(0, 0.28, 0.54),
+              ]
+            : [
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, -0.26, 0.36),
+                new THREE.Vector3(0, -0.34, 0.66),
+                new THREE.Vector3(0, -0.12, 0.80),
+              ];
+          const curve = new THREE.CatmullRomCurve3(pts);
+          tentPivot.add(makeMesh(new THREE.TubeGeometry(curve, 18, 0.105, 12, false), i % 2 === 0 ? crimson : deepPurple));
+          // Ventosas douradas/claras
+          [0.35, 0.65].forEach((t) => {
+            const p = curve.getPoint(t);
+            tentPivot.add(makeMesh(new THREE.SphereGeometry(0.04, 8, 8), clayMat(0xfda4af, 0.45), [p.x, p.y - 0.08, p.z]));
+          });
+
+          if (isDrinkingArm) {
+            const v = createVessel('mini_cup');
+            v.cup.position.set(0, 0.36, 0.54);
+            tentPivot.add(v.cup);
+            special.krakenArms.push({ pivot: tentPivot, cup: v.cup, spout: v.spout, restRotX: 0 });
+            if (i === 1) {
+              spoutMarker = v.spout;
+            }
+          }
+        }
+        special.isKraken = true;
+      }
+
+      // -----------------------------------------------------------------------
+      // 16. MULA SEM CABEÇA
+      // -----------------------------------------------------------------------
+      else if (id === 'mula') {
+        const coat = clayMat(0x451a03, 0.48);
+        const hoof = M.goldBright;
+        const saddle = clayMat(0x991b1b, 0.54);
+        const flameOrange = new THREE.MeshStandardMaterial({
+          color: 0xf97316,
+          emissive: 0xea580c,
+          emissiveIntensity: 0.72,
+          roughness: 0.25,
+          metalness: 0.05,
+        });
+        const flameGold = new THREE.MeshStandardMaterial({
+          color: 0xfacc15,
+          emissive: 0xf59e0b,
+          emissiveIntensity: 0.85,
+          roughness: 0.22,
+          metalness: 0.05,
+        });
+
+        // 4 Perninhas robustas com ferraduras douradas
+        [[-0.24, 0.28, 0.34], [0.24, 0.28, 0.34], [-0.24, 0.28, -0.34], [0.24, 0.28, -0.34]].forEach(([x, y, z]) => {
+          bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.095, 0.36, 8, 12), coat, [x, y, z]));
+          bodyGroup.add(makeMesh(new THREE.CylinderGeometry(0.11, 0.12, 0.10, 14), hoof, [x, 0.06, z]));
+        });
+
+        // Corpo de cavalinho/mula fofo estilizado + sela dourada e vermelha
+        bodyGroup.add(makeMesh(new THREE.CapsuleGeometry(0.36, 0.56, 14, 22), coat, [0, 0.66, 0], [1.0, 1.0, 1.0], [Math.PI / 2, 0, 0]));
+        bodyGroup.add(makeMesh(new THREE.CylinderGeometry(0.38, 0.38, 0.42, 20), saddle, [0, 0.70, -0.02], [1.0, 1.0, 1.0], [Math.PI / 2, 0, 0]));
+        bodyGroup.add(makeMesh(new THREE.TorusGeometry(0.385, 0.028, 10, 22), M.goldBright, [0, 0.70, 0.18]));
+        bodyGroup.add(makeMesh(new THREE.TorusGeometry(0.385, 0.028, 10, 22), M.goldBright, [0, 0.70, -0.22]));
+
+        // Rabo esculpido
+        bodyGroup.add(makeMesh(new THREE.ConeGeometry(0.12, 0.48, 12), clayMat(0x1c1917, 0.58), [0, 0.56, -0.68], [1, 1, 1], [-0.55, 0, 0]));
+
+        // Pescoço erguido com coleira/aro dourado
+        bodyGroup.add(makeMesh(new THREE.CylinderGeometry(0.19, 0.26, 0.46, 18), coat, [0, 1.00, 0.38], [1, 1, 1], [0.22, 0, 0]));
+        bodyGroup.add(makeMesh(new THREE.TorusGeometry(0.20, 0.036, 10, 22), M.goldBright, [0, 1.22, 0.43], [1, 1, 1], [Math.PI / 2 + 0.22, 0, 0]));
+
+        // Chama esculpida vibrante saindo do pescoço (muda para azul-água ao beber!)
+        headGroup.position.set(0, 1.24, 0.44);
+        bodyGroup.add(headGroup);
+
+        const f1 = makeMesh(new THREE.ConeGeometry(0.22, 0.64, 14), flameOrange, [0, 0.30, 0]);
+        const f2 = makeMesh(new THREE.ConeGeometry(0.14, 0.48, 12), flameGold, [0.10, 0.24, 0.06], [1, 1, 1], [0.15, 0, -0.25]);
+        const f3 = makeMesh(new THREE.ConeGeometry(0.13, 0.44, 12), flameGold, [-0.11, 0.22, -0.04], [1, 1, 1], [-0.12, 0, 0.28]);
+        headGroup.add(f1, f2, f3);
+
+        special.isMula = true;
+        special.mulaFlames = [f1, f2, f3];
+        special.mulaFlameMats = [flameOrange, flameGold];
+
+        mouthMarker.position.set(0, 0.12, 0);
+        headGroup.add(mouthMarker);
+
+        // Jarra mágica flutuante pronta para despejar água sobre o pescoço!
+        armGroup.position.set(0.66, 1.62, 0.44);
+        root.add(armGroup);
+        const v = createVessel('pitcher');
+        cupGroup = v.cup; spoutMarker = v.spout;
+        armGroup.add(cupGroup);
+      }
+
+      // Guarda poses de repouso para interpolação limpa
+      const idleRest = {
+        armPos: armGroup.position.clone(),
+        armRot: armGroup.rotation.clone(),
+        cupPos: cupGroup.position.clone(),
+        cupRot: cupGroup.rotation.clone(),
+        headPos: headGroup.position.clone(),
+        headRot: headGroup.rotation.clone(),
+        bodyY: bodyGroup.position.y,
+      };
+
+      return {
+        id,
+        root,
+        bodyGroup,
+        headGroup,
+        armGroup,
+        cupGroup,
+        mouthMarker,
+        spoutMarker,
+        special,
+        idleRest,
+      };
+    }
+
+    // =========================================================================
+    // 7. CENA 3D DE ESTÚDIO (THREE.JS + SOMBRAS + PEDESTAL + PARTÍCULAS)
+    // =========================================================================
+    const canvasWrap = document.getElementById('stage-canvas-wrap');
+    const stageLoader = document.getElementById('stage-loader');
+    const stageGlow = document.getElementById('stage-glow');
+
+    const scene = new THREE.Scene();
+
+    const width = canvasWrap.clientWidth || 640;
+    const height = canvasWrap.clientHeight || 480;
+
+    const camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 100);
+    const DEFAULT_CAM_POS = new THREE.Vector3(0.45, 1.75, 4.75);
+    const DEFAULT_TARGET = new THREE.Vector3(0, 0.92, 0);
+    camera.position.copy(DEFAULT_CAM_POS);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance',
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(width, height);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    canvasWrap.appendChild(renderer.domElement);
+    stageLoader.classList.add('hidden');
+
+    // Ambiente PBR sutil (dá vida aos metais dourados e materiais clay)
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    scene.environmentIntensity = 0.45;
+
+    // Iluminação de Estúdio Profissional
+    const hemiLight = new THREE.HemisphereLight(0xe0f2fe, 0x1e1b4b, 0.85);
+    scene.add(hemiLight);
+
+    // Luz principal quente com sombras suaves
+    const keyLight = new THREE.DirectionalLight(0xfff1d6, 2.2);
+    keyLight.position.set(3.4, 5.2, 4.2);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = 1024;
+    keyLight.shadow.mapSize.height = 1024;
+    keyLight.shadow.camera.near = 1;
+    keyLight.shadow.camera.far = 16;
+    keyLight.shadow.camera.left = -2.5;
+    keyLight.shadow.camera.right = 2.5;
+    keyLight.shadow.camera.top = 3.2;
+    keyLight.shadow.camera.bottom = -1.5;
+    keyLight.shadow.bias = -0.0005;
+    scene.add(keyLight);
+
+    // Luz de recorte (Rim Light) azul-ciano atrás
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.9);
+    rimLight.position.set(-3.5, 3.0, -3.4);
+    scene.add(rimLight);
+
+    // Luz de preenchimento dourada suave
+    const fillLight = new THREE.PointLight(0xd4af37, 1.35, 10);
+    fillLight.position.set(-2.6, 1.4, 2.4);
+    scene.add(fillLight);
+
+    // OrbitControls suave
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.copy(DEFAULT_TARGET);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.065;
+    controls.enablePan = false;
+    controls.minDistance = 2.6;
+    controls.maxDistance = 7.4;
+    controls.minPolarAngle = Math.PI * 0.14;
+    controls.maxPolarAngle = Math.PI * 0.56;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.85;
+
+    let idleRotateTimer = null;
+    controls.addEventListener('start', () => {
+      controls.autoRotate = false;
+      if (idleRotateTimer) clearTimeout(idleRotateTimer);
+    });
+    controls.addEventListener('end', () => {
+      idleRotateTimer = setTimeout(() => {
+        controls.autoRotate = true;
+      }, 3000);
+    });
+
+    // Pedestal Circular Escuro Estilo Boticário + Aro Metálico de Raridade
+    const pedestalGroup = new THREE.Group();
+    const pedTopMat = clayMat(0x111827, 0.42, 0.22);
+    const pedBaseMat = clayMat(0x0b0f1a, 0.55, 0.30);
+    const rarityRingMat = new THREE.MeshStandardMaterial({
+      color: 0x94a3b8,
+      emissive: 0x94a3b8,
+      emissiveIntensity: 0.35,
+      roughness: 0.22,
+      metalness: 0.88,
+    });
+
+    const pedTop = makeMesh(new THREE.CylinderGeometry(1.38, 1.48, 0.16, 48), pedTopMat, [0, -0.08, 0]);
+    const pedBase = makeMesh(new THREE.CylinderGeometry(1.54, 1.66, 0.20, 48), pedBaseMat, [0, -0.24, 0]);
+    const rarityRing = makeMesh(new THREE.TorusGeometry(1.42, 0.042, 16, 56), rarityRingMat, [0, -0.01, 0], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    const innerGoldRing = makeMesh(new THREE.TorusGeometry(1.18, 0.014, 10, 48), M.gold, [0, 0.005, 0], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    pedestalGroup.add(pedTop, pedBase, rarityRing, innerGoldRing);
+    scene.add(pedestalGroup);
+
+    // =========================================================================
+    // 8. EFEITOS AQUÁTICOS (JATO DE ÁGUA + GOTÍCULAS DE RESPINGO + PARTÍCULAS)
+    // =========================================================================
+    const fxGroup = new THREE.Group();
+    scene.add(fxGroup);
+
+    // Jato animado de água (esferas fluidas em arco parabólico da boca do copo à boca do personagem)
+    const STREAM_COUNT = 10;
+    const streamBeads = [];
+    const beadGeo = new THREE.SphereGeometry(0.042, 12, 10);
+    for (let i = 0; i < STREAM_COUNT; i++) {
+      const m = new THREE.Mesh(beadGeo, M.waterStream);
+      m.visible = false;
+      fxGroup.add(m);
+      streamBeads.push(m);
+    }
+
+    // Pool de gotículas de respingo / bolhinhas de dragão / partículas de satisfação
+    const particles = [];
+    const dropGeo = new THREE.SphereGeometry(0.036, 10, 8);
+    const sparkleGeo = new THREE.OctahedronGeometry(0.045);
+
+    function spawnSplash(origin, count = 7, mode = 'drop') {
+      for (let i = 0; i < count; i++) {
+        const isSparkle = mode === 'sparkle';
+        const isBubble = mode === 'bubble';
+        const mat = isSparkle
+          ? new THREE.MeshStandardMaterial({
+              color: 0x7dd3fc,
+              emissive: 0x38bdf8,
+              emissiveIntensity: 0.9,
+              roughness: 0.1,
+              transparent: true,
+              opacity: 0.95,
+            })
+          : new THREE.MeshStandardMaterial({
+              color: isBubble ? 0xbae6fd : 0x38bdf8,
+              emissive: 0x0284c7,
+              emissiveIntensity: 0.45,
+              roughness: 0.08,
+              transparent: true,
+              opacity: isBubble ? 0.82 : 0.92,
+            });
+
+        const mesh = new THREE.Mesh(isSparkle ? sparkleGeo : dropGeo, mat);
+        mesh.position.copy(origin);
+        const s = isBubble ? 0.9 + Math.random() * 1.1 : 0.65 + Math.random() * 0.75;
+        mesh.scale.setScalar(s);
+        fxGroup.add(mesh);
+
+        const angle = Math.random() * Math.PI * 2;
+        const speed = isSparkle ? 1.1 + Math.random() * 1.3 : isBubble ? 0.25 + Math.random() * 0.45 : 0.55 + Math.random() * 0.85;
+        particles.push({
+          mesh,
+          vel: new THREE.Vector3(
+            Math.cos(angle) * speed,
+            isBubble ? 0.9 + Math.random() * 0.8 : isSparkle ? 1.2 + Math.random() * 1.2 : 0.7 + Math.random() * 1.0,
+            Math.sin(angle) * speed
+          ),
+          gravity: isBubble ? -0.45 : isSparkle ? 1.2 : 3.8,
+          life: 0,
+          maxLife: isBubble ? 1.25 : isSparkle ? 0.95 : 0.65,
+        });
+      }
+    }
+
+    function updateParticles(dt) {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life += dt;
+        if (p.life >= p.maxLife) {
+          fxGroup.remove(p.mesh);
+          p.mesh.material.dispose();
+          particles.splice(i, 1);
+          continue;
+        }
+        p.vel.y -= p.gravity * dt;
+        p.mesh.position.addScaledVector(p.vel, dt);
+        const t = p.life / p.maxLife;
+        p.mesh.material.opacity = Math.max(0, 1 - t);
+        p.mesh.scale.multiplyScalar(1 - dt * 0.5);
+      }
+    }
+
+    // =========================================================================
+    // 9. GERENCIAMENTO DO PERSONAGEM ATIVO & MOTOR DE ANIMAÇÃO
+    // =========================================================================
+    let activeRig = null;
+    const rigCache = new Map();
+
+    function getMeta(id) {
+      return CHARACTERS.find((c) => c.id === id) || CHARACTERS[0];
+    }
+
+    function selectCharacter(id, autoDrink = false) {
+      if (activeRig) {
+        scene.remove(activeRig.root);
+      }
+
+      if (!rigCache.has(id)) {
+        rigCache.set(id, buildCharacter(id));
+      }
+      activeRig = rigCache.get(id);
+      scene.add(activeRig.root);
+      state.currentId = id;
+
+      // Reseta estado da animação ao trocar
+      stopDrinking(true);
+
+      const meta = getMeta(id);
+      const rar = RARITIES[meta.rarity];
+
+      // Atualiza cor do aro metálico do pedestal e glow de fundo
+      rarityRingMat.color.setHex(rar.hex);
+      rarityRingMat.emissive.setHex(rar.hex);
+      stageGlow.style.background = `radial-gradient(circle, ${rar.css} 0%, transparent 70%)`;
+
+      // Atualiza UI textual
+      document.getElementById('char-name').textContent = meta.name;
+      document.getElementById('char-subtitle').textContent = `${meta.subtitle} · ${meta.vessel}`;
+      document.getElementById('char-index-badge').textContent = `#${meta.num} / 16`;
+
+      const badge = document.getElementById('char-rarity-badge');
+      badge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${rar.badgeClass}`;
+      badge.textContent = rar.title;
+
+      setSpeech(meta.idleQuote);
+      highlightCatalogCard(id);
+
+      if (autoDrink) {
+        triggerDrink();
+      }
+    }
+
+    function setSpeech(text) {
+      const bubble = document.getElementById('speech-bubble');
+      const speechText = document.getElementById('speech-text');
+      speechText.textContent = text;
+      bubble.classList.remove('speech-pop');
+      void bubble.offsetWidth;
+      bubble.classList.add('speech-pop');
+    }
+
+    function setAnimPill(drinking) {
+      const dot = document.getElementById('anim-dot');
+      const txt = document.getElementById('anim-status-text');
+      if (drinking) {
+        dot.className = 'w-2 h-2 rounded-full bg-sky-400 animate-ping';
+        txt.textContent = 'Bebendo água...';
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        txt.textContent = state.loopEnabled ? 'Loop ativo' : 'Em repouso';
+      }
+    }
+
+    function triggerDrink() {
+      if (!activeRig) return;
+      state.isDrinking = true;
+      state.drinkTime = 0;
+      state.gulpBeatPlayed = [false, false, false];
+      state.ahhhPlayed = false;
+      setAnimPill(true);
+    }
+
+    function stopDrinking(resetPose = false) {
+      state.isDrinking = false;
+      state.drinkTime = 0;
+      streamBeads.forEach((b) => (b.visible = false));
+      setAnimPill(false);
+
+      if (resetPose && activeRig) {
+        const r = activeRig.idleRest;
+        activeRig.armGroup.position.copy(r.armPos);
+        activeRig.armGroup.rotation.copy(r.armRot);
+        activeRig.cupGroup.position.copy(r.cupPos);
+        activeRig.cupGroup.rotation.copy(r.cupRot);
+        activeRig.headGroup.position.copy(r.headPos);
+        activeRig.headGroup.rotation.copy(r.headRot);
+        activeRig.bodyGroup.position.y = r.bodyY;
+        activeRig.bodyGroup.scale.set(1, 1, 1);
+        if (activeRig.special.nessieGulp) activeRig.special.nessieGulp.visible = false;
+        if (activeRig.special.mulaFlameMats) {
+          activeRig.special.mulaFlameMats[0].color.setHex(0xf97316);
+          activeRig.special.mulaFlameMats[0].emissive.setHex(0xea580c);
+          activeRig.special.mulaFlameMats[1].color.setHex(0xfacc15);
+          activeRig.special.mulaFlameMats[1].emissive.setHex(0xf59e0b);
+        }
+      }
+    }
+
+    // Vetores temporários reutilizados no loop 60fps
+    const tmpSpout = new THREE.Vector3();
+    const tmpMouth = new THREE.Vector3();
+    const tmpMid = new THREE.Vector3();
+    const colorOrange = new THREE.Color(0xf97316);
+    const colorOrangeEm = new THREE.Color(0xea580c);
+    const colorGold = new THREE.Color(0xfacc15);
+    const colorGoldEm = new THREE.Color(0xf59e0b);
+    const colorAqua = new THREE.Color(0x38bdf8);
+    const colorAquaEm = new THREE.Color(0x0ea5e9);
+    const colorCyan = new THREE.Color(0xbae6fd);
+
+    function smoothstep(edge0, edge1, x) {
+      const t = THREE.MathUtils.clamp((x - edge0) / (edge1 - edge0), 0, 1);
+      return t * t * (3 - 2 * t);
+    }
+
+    function updateCharacterAnimation(timeSec, dt) {
+      if (!activeRig) return;
+      const rig = activeRig;
+      const rest = rig.idleRest;
+      const sp = rig.special;
+
+      // 1. Animação Contínua de Repouso (Respiração, Flutuação, Redemoinho, Chamas)
+      const breathe = Math.sin(timeSec * 2.4);
+      let scaleY = 1 + breathe * 0.022;
+      let scaleXZ = 1 - breathe * 0.012;
+      let bodyOffsetY = sp.isFloater ? Math.sin(timeSec * 2.1) * 0.07 : 0;
+
+      if (sp.saciWhirlwind) {
+        sp.saciWhirlwind.rotation.y += dt * (state.isDrinking ? 4.8 : 2.2);
+        bodyOffsetY = Math.sin(timeSec * 3.2) * 0.045;
+      }
+
+      if (sp.mulaFlames) {
+        sp.mulaFlames.forEach((f, idx) => {
+          f.scale.y = 0.92 + Math.sin(timeSec * (8 + idx * 2) + idx) * 0.14;
+          f.rotation.y = Math.sin(timeSec * 4 + idx) * 0.25;
+        });
+      }
+
+      if (sp.dragonWings) {
+        const flap = Math.sin(timeSec * (state.isDrinking ? 14 : 4)) * 0.22;
+        sp.dragonWings[0].rotation.z = 0.35 + flap;
+        sp.dragonWings[1].rotation.z = -0.35 - flap;
+      }
+
+      // 2. Estado Bebendo Água (3 Fases Expressivas)
+      if (state.isDrinking) {
+        state.drinkTime += dt;
+        const t = state.drinkTime;
+
+        // Fase 1 (0.0 -> 0.65s): Levanta recipiente / abre tampa / aproxima jarra
+        const raise = smoothstep(0.0, 0.62, t);
+        // Fase 2 (0.62 -> 2.38s): 3 Goles rítmicos ("glug-glug-glug")
+        const inGulps = t >= 0.62 && t <= 2.38;
+        const gulpProgress = THREE.MathUtils.clamp((t - 0.62) / 1.76, 0, 1);
+        const gulpPulse = inGulps ? Math.max(0, Math.sin(gulpProgress * Math.PI * 6)) : 0;
+        // Fase 3 (2.38 -> 3.35s): Abaixa + Pulinho feliz "Aaaah!"
+        const lower = smoothstep(2.35, 2.85, t);
+        const activeHold = raise * (1 - lower);
+
+        // Dispara som + gotas nos 3 tempos de gole
+        const beatTimes = [0.76, 1.32, 1.88];
+        beatTimes.forEach((bt, idx) => {
+          if (t >= bt && !state.gulpBeatPlayed[idx]) {
+            state.gulpBeatPlayed[idx] = true;
+            playGulpSound(idx);
+            rig.mouthMarker.getWorldPosition(tmpMouth);
+            spawnSplash(tmpMouth, 5, 'drop');
+          }
+        });
+
+        // Dispara satisfação "Aaaah!" no início da Fase 3
+        if (t >= 2.46 && !state.ahhhPlayed) {
+          state.ahhhPlayed = true;
+          playAhhhSound();
+          const meta = getMeta(rig.id);
+          const quote = meta.drinkQuotes[state.quoteIdx % meta.drinkQuotes.length];
+          state.quoteIdx++;
+          setSpeech(quote);
+
+          rig.mouthMarker.getWorldPosition(tmpMouth);
+          spawnSplash(tmpMouth, 14, 'sparkle');
+          if (sp.isDragon) {
+            // Dragão Bebê solta bolhinhas azuis pela boca!
+            spawnSplash(tmpMouth, 10, 'bubble');
+          }
+        }
+
+        // Squash & Stretch da Fase 3 (pulinho feliz!)
+        let hopY = 0;
+        if (t > 2.42 && t < 3.18) {
+          const hp = (t - 2.42) / 0.76;
+          hopY = Math.sin(hp * Math.PI) * 0.24;
+          const sq = Math.sin(hp * Math.PI * 2) * 0.09;
+          scaleY += sq;
+          scaleXZ -= sq * 0.6;
+        }
+
+        // Pulso da barriga durante os goles
+        if (inGulps) {
+          scaleXZ += gulpPulse * 0.065;
+          scaleY -= gulpPulse * 0.03;
+        }
+
+        // Movimentos específicos por tipo de personagem
+        if (sp.isMimic) {
+          // Mímico abre a tampa inteira e mastiga durante os goles!
+          const chomp = inGulps ? Math.sin(gulpProgress * Math.PI * 6) * 0.22 : 0;
+          rig.headGroup.rotation.x = rest.headRot.x - activeHold * 0.88 + chomp;
+          // Jarra flutuante vai para cima da boca e inclina
+          rig.armGroup.position.set(
+            THREE.MathUtils.lerp(rest.armPos.x, 0.26, activeHold),
+            THREE.MathUtils.lerp(rest.armPos.y, 1.48, activeHold),
+            THREE.MathUtils.lerp(rest.armPos.z, 0.22, activeHold)
+          );
+          rig.cupGroup.rotation.z = activeHold * 1.18;
+        } else if (sp.isMula) {
+          // Jarra flutuante vai sobre o pescoço e despeja água; chama muda para azul-água!
+          rig.armGroup.position.set(
+            THREE.MathUtils.lerp(rest.armPos.x, 0.30, activeHold),
+            THREE.MathUtils.lerp(rest.armPos.y, 1.98, activeHold),
+            THREE.MathUtils.lerp(rest.armPos.z, 0.44, activeHold)
+          );
+          rig.cupGroup.rotation.z = activeHold * 1.25;
+
+          const aquaBlend = smoothstep(0.65, 1.15, t) * (1 - smoothstep(2.65, 3.25, t));
+          sp.mulaFlameMats[0].color.copy(colorOrange).lerp(colorAqua, aquaBlend);
+          sp.mulaFlameMats[0].emissive.copy(colorOrangeEm).lerp(colorAquaEm, aquaBlend);
+          sp.mulaFlameMats[1].color.copy(colorGold).lerp(colorCyan, aquaBlend);
+          sp.mulaFlameMats[1].emissive.copy(colorGoldEm).lerp(colorAqua, aquaBlend);
+        } else if (sp.isNessie) {
+          // Nessie inclina o pescoço comprido até a tigela e o gole percorre o pescoço!
+          rig.headGroup.rotation.x = rest.headRot.x + activeHold * 0.62 - gulpPulse * 0.08;
+          if (inGulps && sp.nessieGulp && sp.nessieCurve) {
+            sp.nessieGulp.visible = true;
+            const singleBeat = (gulpProgress * 3) % 1;
+            const pt = sp.nessieCurve.getPoint(THREE.MathUtils.clamp(1 - singleBeat, 0.05, 0.98));
+            sp.nessieGulp.position.copy(pt);
+            const s = 0.75 + Math.sin(singleBeat * Math.PI) * 0.45;
+            sp.nessieGulp.scale.setScalar(s);
+          } else if (sp.nessieGulp) {
+            sp.nessieGulp.visible = false;
+          }
+        } else if (sp.isKraken) {
+          // 3 Tentáculos com copinhos sobem alternadamente até a boca!
+          rig.headGroup.rotation.x = rest.headRot.x - activeHold * 0.24 - gulpPulse * 0.08;
+          sp.krakenArms.forEach((ka, idx) => {
+            const wave = inGulps ? Math.sin(gulpProgress * Math.PI * 6 + idx * 1.8) * 0.18 : 0;
+            ka.pivot.rotation.x = -activeHold * 0.55 + wave;
+            ka.cup.rotation.x = -activeHold * 0.55;
+          });
+        } else {
+          // Padrão expressivo para os demais personagens com braço + copo
+          const jitterX = sp.isJittery && inGulps ? Math.sin(timeSec * 48) * 0.04 : 0;
+          const jitterZ = sp.isJittery && inGulps ? Math.cos(timeSec * 52) * 0.03 : 0;
+
+          if (sp.isStraw) {
+            // Cogumelo e ET sugam pelo canudo (inclinam levemente pra frente)
+            rig.headGroup.rotation.x = rest.headRot.x + activeHold * 0.14 + gulpPulse * 0.07;
+            rig.armGroup.position.set(
+              rest.armPos.x - activeHold * 0.16,
+              rest.armPos.y + activeHold * 0.24,
+              rest.armPos.z + activeHold * 0.10
+            );
+            rig.armGroup.rotation.x = rest.armRot.x - activeHold * 0.22;
+            rig.cupGroup.rotation.z = activeHold * 0.18;
+          } else {
+            // Virar caneca/cálice/cabaça/balde inclinando a cabeça pra trás!
+            rig.headGroup.rotation.x = rest.headRot.x - activeHold * 0.36 - gulpPulse * 0.10;
+            rig.headGroup.rotation.z = jitterZ;
+
+            rig.armGroup.position.set(
+              rest.armPos.x - activeHold * 0.22 + jitterX,
+              rest.armPos.y + activeHold * 0.34,
+              rest.armPos.z + activeHold * 0.14
+            );
+            rig.armGroup.rotation.x = rest.armRot.x - activeHold * 0.65;
+            rig.armGroup.rotation.z = rest.armRot.z + activeHold * 0.25;
+            rig.cupGroup.rotation.z = activeHold * 0.92;
+          }
+
+          // Sapo Mago infla a garganta/papo em cada gole!
+          if (sp.frogThroat) {
+            const puff = inGulps ? 1 + gulpPulse * 0.52 : 1;
+            sp.frogThroat.scale.set(1.15 * puff, 0.75 * puff, 0.85 * puff);
+          }
+        }
+
+        // Jato animado de água azul (Phase 2)
+        if (inGulps) {
+          rig.spoutMarker.getWorldPosition(tmpSpout);
+          rig.mouthMarker.getWorldPosition(tmpMouth);
+          tmpMid.addVectors(tmpSpout, tmpMouth).multiplyScalar(0.5);
+          tmpMid.y += sp.isStraw ? 0.04 : 0.14;
+
+          streamBeads.forEach((bead, i) => {
+            bead.visible = true;
+            const u = ((timeSec * 3.8 + i / STREAM_COUNT) % 1);
+            // Curva quadrática de Bézier entre o bico do copo e a boca
+            const inv = 1 - u;
+            bead.position.set(
+              inv * inv * tmpSpout.x + 2 * inv * u * tmpMid.x + u * u * tmpMouth.x,
+              inv * inv * tmpSpout.y + 2 * inv * u * tmpMid.y + u * u * tmpMouth.y,
+              inv * inv * tmpSpout.z + 2 * inv * u * tmpMid.z + u * u * tmpMouth.z
+            );
+            const pulseSize = 0.7 + Math.sin(u * Math.PI) * 0.55;
+            bead.scale.setScalar(pulseSize);
+          });
+        } else {
+          streamBeads.forEach((b) => (b.visible = false));
+        }
+
+        rig.bodyGroup.position.y = rest.bodyY + bodyOffsetY + hopY;
+        rig.bodyGroup.scale.set(scaleXZ, scaleY, scaleXZ);
+
+        // Encerra o ciclo
+        if (t >= state.drinkDuration) {
+          stopDrinking(true);
+          if (state.loopEnabled) {
+            state.loopCooldown = 0.65;
+          }
+        }
+      } else {
+        // Estado ocioso suave
+        rig.bodyGroup.position.y = rest.bodyY + bodyOffsetY;
+        rig.bodyGroup.scale.set(scaleXZ, scaleY, scaleXZ);
+        if (!sp.isMimic && !sp.isMula) {
+          rig.headGroup.rotation.z = Math.sin(timeSec * 1.4) * 0.04;
+        }
+        if (state.loopEnabled) {
+          state.loopCooldown -= dt;
+          if (state.loopCooldown <= 0) {
+            triggerDrink();
+          }
+        }
+      }
+    }
+
+    // =========================================================================
+    // 10. EXPORTAÇÃO REAL EM .GLB (GLTFExporter)
+    // =========================================================================
+    const exporter = new GLTFExporter();
+
+    function exportCurrentGLB() {
+      if (!activeRig) return;
+      const meta = getMeta(activeRig.id);
+
+      // Pausa animação brevemente na pose limpa para exportar o modelo bem alinhado
+      const wasDrinking = state.isDrinking;
+      stopDrinking(true);
+      showToast(`Gerando arquivo 3D de ${meta.name}...`);
+
+      try {
+        exporter.parse(
+          activeRig.root,
+          (result) => {
+            if (result instanceof ArrayBuffer) {
+              const blob = new Blob([result], { type: 'model/gltf-binary' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `gotaviva-${meta.id}.glb`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              setTimeout(() => URL.revokeObjectURL(url), 1000);
+              showToast(`Modelo "${meta.name}.glb" baixado com sucesso!`);
+            } else {
+              showToast('Erro inesperado ao gerar binário GLB.');
+            }
+            if (wasDrinking || state.loopEnabled) triggerDrink();
+          },
+          (err) => {
+            console.error('Erro GLTFExporter:', err);
+            showToast('Não foi possível exportar o .GLB neste navegador.');
+          },
+          { binary: true }
+        );
+      } catch (err) {
+        console.error(err);
+        showToast('Erro ao exportar modelo 3D.');
+      }
+    }
+
+    // =========================================================================
+    // 11. CONSTRUÇÃO DO CATÁLOGO DOS 16 PERSONAGENS & EVENTOS DA UI
+    // =========================================================================
+    const catalogEl = document.getElementById('character-catalog');
+
+    function buildCatalogUI() {
+      catalogEl.innerHTML = '';
+      const order = ['comum', 'raro', 'epico', 'lendario'];
+
+      order.forEach((rarKey) => {
+        const rar = RARITIES[rarKey];
+        const groupChars = CHARACTERS.filter((c) => c.rarity === rarKey);
+
+        const section = document.createElement('div');
+        section.className = 'flex flex-col gap-2';
+
+        const titleRow = document.createElement('div');
+        titleRow.className = 'flex items-center justify-between px-1';
+        titleRow.innerHTML = `
+          <span class="text-[11px] font-bold uppercase tracking-wider" style="color:${rar.css}">${rar.title}</span>
+          <span class="text-[10px] text-slate-500 font-semibold">${groupChars.length}</span>
+        `;
+        section.appendChild(titleRow);
+
+        const grid = document.createElement('div');
+        grid.className = 'grid grid-cols-2 gap-2';
+
+        groupChars.forEach((ch) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.dataset.charId = ch.id;
+          btn.className = `char-card text-left p-2.5 rounded-2xl bg-obsidian/75 hover:bg-white/5 border ${rar.cardRing} transition-all duration-150 active:scale-95 flex items-center gap-2.5`;
+          btn.innerHTML = `
+            <span class="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-lg shrink-0">${ch.icon}</span>
+            <div class="min-w-0">
+              <div class="text-xs font-bold text-white truncate">${ch.num}. ${ch.name}</div>
+              <div class="text-[10px] text-slate-400 truncate">${ch.vessel}</div>
+            </div>
+          `;
+          btn.addEventListener('click', () => {
+            playSwitchSound();
+            selectCharacter(ch.id, true);
+          });
+          grid.appendChild(btn);
+        });
+
+        section.appendChild(grid);
+        catalogEl.appendChild(section);
+      });
+    }
+
+    function highlightCatalogCard(activeId) {
+      document.querySelectorAll('.char-card').forEach((card) => {
+        const id = card.dataset.charId;
+        const meta = getMeta(id);
+        const rar = RARITIES[meta.rarity];
+        if (id === activeId) {
+          card.className = `char-card text-left p-2.5 rounded-2xl border shadow-lg transition-all duration-150 flex items-center gap-2.5 ${rar.activeRing}`;
+        } else {
+          card.className = `char-card text-left p-2.5 rounded-2xl bg-obsidian/75 hover:bg-white/5 border ${rar.cardRing} transition-all duration-150 active:scale-95 flex items-center gap-2.5`;
+        }
+      });
+    }
+
+    // Eventos dos botões principais
+    document.getElementById('btn-drink').addEventListener('click', () => {
+      ensureAudio();
+      triggerDrink();
+    });
+
+    const btnLoop = document.getElementById('btn-loop');
+    const loopLabel = document.getElementById('loop-label');
+    btnLoop.addEventListener('click', () => {
+      state.loopEnabled = !state.loopEnabled;
+      btnLoop.setAttribute('aria-pressed', String(state.loopEnabled));
+      loopLabel.textContent = state.loopEnabled ? 'Beber em Loop: ON' : 'Beber em Loop: OFF';
+      if (state.loopEnabled) {
+        btnLoop.classList.add('border-sky-400/60', 'bg-sky-500/15', 'text-sky-200');
+        if (!state.isDrinking) triggerDrink();
+      } else {
+        btnLoop.classList.remove('border-sky-400/60', 'bg-sky-500/15', 'text-sky-200');
+      }
+      setAnimPill(state.isDrinking);
+    });
+
+    document.getElementById('btn-sound').addEventListener('click', () => {
+      state.soundEnabled = !state.soundEnabled;
+      document.getElementById('sound-emoji').textContent = state.soundEnabled ? '🔊' : '🔇';
+      document.getElementById('sound-text').textContent = state.soundEnabled ? 'Som' : 'Mudo';
+      if (state.soundEnabled) playSwitchSound();
+    });
+
+    document.getElementById('btn-reset-cam').addEventListener('click', () => {
+      camera.position.copy(DEFAULT_CAM_POS);
+      controls.target.copy(DEFAULT_TARGET);
+      controls.update();
+      showToast('Câmera centralizada');
+    });
+
+    document.getElementById('btn-export-glb').addEventListener('click', exportCurrentGLB);
+
+    function stepCharacter(delta) {
+      const idx = CHARACTERS.findIndex((c) => c.id === state.currentId);
+      const next = (idx + delta + CHARACTERS.length) % CHARACTERS.length;
+      playSwitchSound();
+      selectCharacter(CHARACTERS[next].id, true);
+    }
+    document.getElementById('btn-prev-char').addEventListener('click', () => stepCharacter(-1));
+    document.getElementById('btn-next-char').addEventListener('click', () => stepCharacter(1));
+
+    // Redimensionamento responsivo do Canvas
+    const ro = new ResizeObserver(() => {
+      const w = canvasWrap.clientWidth;
+      const h = canvasWrap.clientHeight;
+      if (!w || !h) return;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    });
+    ro.observe(canvasWrap);
+
+    // =========================================================================
+    // 12. INICIALIZAÇÃO & LOOP DE RENDERIZAÇÃO 60 FPS
+    // =========================================================================
+    buildCatalogUI();
+    selectCharacter('gnomo', false);
+
+    // Dispara animação de boas-vindas do Gnomo Rabugento 1 segundo após carregar
+    setTimeout(() => {
+      if (state.currentId === 'gnomo' && !state.isDrinking) {
+        triggerDrink();
+      }
+    }, 1000);
+
+    let lastNow = performance.now();
+    function animate(now) {
+      requestAnimationFrame(animate);
+      const dt = Math.min(0.05, (now - lastNow) / 1000);
+      lastNow = now;
+      const timeSec = now / 1000;
+
+      updateCharacterAnimation(timeSec, dt);
+      updateParticles(dt);
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
